@@ -1,0 +1,30 @@
+{
+  "Accounts": {
+    "Tenant1": {
+      "TenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "ClientId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "ClientSecret": "your-client-secret-here",
+      "DisplayName": "Xebia Work"
+    },
+    "Tenant2": {
+      "TenantId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
+      "ClientId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
+      "ClientSecret": "your-client-secret-here",
+      "DisplayName": "Marimer M365"
+    }
+  },
+  "McpServer": {
+    "Type": "softeria",
+    "Command": "npx",
+    "Args": ["-y", "@softeria/ms-365-mcp-server", "--org-mode"],
+    "Comment": "Alternative options: hvkshetry (node index.js) or elyxlz (uvx microsoft-mcp)"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft": "Information",
+      "System": "Information",
+      "CalendarMcp.Spikes.M365MultiTenant": "Debug"
+    }
+  }
+}

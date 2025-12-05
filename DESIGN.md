@@ -322,6 +322,11 @@ For users choosing local Ollama models, recommended options:
 - **Language**: C# / .NET 10
 - **MCP Server Framework**: ModelContextProtocol NuGet package
 - **MCP Client Integration**: Consumes existing Microsoft and Google MCP servers
+  - **Microsoft**: @softeria/ms-365-mcp-server (npm) - Primary choice
+    - 90+ tools, org mode, OAuth support
+    - Alternative: hvkshetry/office-365-mcp-server or elyxlz/microsoft-mcp (Python)
+  - **Google**: google-workspace-mcp (TBD - to be evaluated in spike)
+  - **Outlook.com**: Same as Microsoft, using personal account mode
 - **AI Routing**: Configurable (Ollama, OpenAI, Anthropic, Azure, Custom)
 - **Configuration**: JSON-based with environment variable support
 - **Authentication**: OAuth 2.0 (Microsoft MSAL, Google OAuth)
@@ -329,6 +334,47 @@ For users choosing local Ollama models, recommended options:
   - OpenTelemetry .NET SDK
   - OTLP exporters
   - Instrumentation libraries for HTTP, gRPC, and custom spans
+
+## MCP Server Dependencies
+
+### Microsoft 365 - Evaluated Options
+
+#### @softeria/ms-365-mcp-server ⭐ PRIMARY CHOICE
+- **Status**: ✅ Mature, actively maintained (v0.27.1)
+- **npm**: `@softeria/ms-365-mcp-server`
+- **Repository**: https://github.com/Softeria/ms-365-mcp-server
+- **Multi-tenant**: Run multiple instances, one per tenant
+- **Features**: 90+ tools, org mode, OAuth/device code/BYOT auth
+- **Transport**: stdio (default) or HTTP (`--http <port>`)
+- **Installation**: `npm install -g @softeria/ms-365-mcp-server`
+
+#### hvkshetry/office-365-mcp-server - Alternative
+- **Status**: ✅ Functional, well-documented
+- **Repository**: https://github.com/hvkshetry/office-365-mcp-server
+- **Multi-tenant**: Requires separate instances
+- **Features**: 24 consolidated tools, headless operation
+- **Installation**: Clone from GitHub
+
+#### elyxlz/microsoft-mcp - Python Option
+- **Status**: ✅ Working, Python-based
+- **Repository**: https://github.com/elyxlz/microsoft-mcp
+- **Multi-tenant**: ✅ Built-in multi-account support
+- **Features**: Native `account_id` parameter in all tools
+- **Installation**: Clone and `uv sync`
+- **Note**: Best multi-account support, but Python complicates C# integration
+
+### Google Workspace
+- **To be evaluated**: google-workspace-mcp or similar
+- **Approach**: Similar multi-instance strategy as Microsoft
+
+### Implementation Strategy
+
+For multi-tenant support, Calendar-MCP will:
+1. **Spawn multiple MCP server instances** - One per tenant/account
+2. **Use HTTP transport** - Easier process management from .NET
+3. **Manage instance lifecycle** - Start, stop, health checks
+4. **Route requests** - Smart router determines which instance to query
+5. **Aggregate results** - Combine data from multiple instances
 
 ## Security Considerations
 
