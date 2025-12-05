@@ -110,12 +110,18 @@ graph TD
   - Uses Microsoft.Graph NuGet package
   - MSAL (Microsoft.Identity.Client) for authentication
   - **Manages multiple M365 accounts** (different tenants) simultaneously
-  - **Critical - App Registration**: Each account (tenant) requires its own Azure AD/Entra app registration (ClientId)
-    - Cannot share app registrations across tenants
-    - Each tenant's admin must create/approve the app registration
-    - App registration defines permissions and scopes for that tenant
+  - **App Registration Options**:
+    - **Option A (Shared)**: Single app registration used across multiple tenants
+      - Simpler setup, one ClientId for all accounts
+      - Works when tenant admins allow external apps
+      - Requires multi-tenant app registration ("Accounts in any organizational directory")
+    - **Option B (Per-Tenant)**: Separate app registration per tenant
+      - Required when tenant IT policies restrict external apps
+      - Each tenant admin creates/approves their own app registration
+      - More granular control, tenant-specific permissions
+    - **User Choice**: Configuration supports both models
   - **Critical - Authentication**: Each account has its own `IPublicClientApplication` instance
-    - Built with that account's specific ClientId and TenantId
+    - Built with that account's specific ClientId (shared or per-tenant) and TenantId
   - **Critical - Token Storage**: Each account has separate token cache file: `msal_cache_{accountId}.bin`
   - Token isolation prevents cross-tenant contamination
   - Operations: email (read/send), calendar (CRUD), contacts
@@ -125,12 +131,18 @@ graph TD
   - Uses Google.Apis.Gmail and Google.Apis.Calendar NuGet packages
   - OAuth 2.0 with GoogleWebAuthorizationBroker
   - **Manages multiple Google accounts** (different users) simultaneously
-  - **Critical - OAuth Client**: Each account may require its own Google Cloud OAuth client (ClientId/Secret)
-    - Personal accounts: Can share OAuth client across multiple users
-    - Workspace accounts: May require separate OAuth client per domain/organization
-    - Depends on Google Workspace admin policies
+  - **OAuth Client Options**:
+    - **Option A (Shared)**: Single OAuth client (ClientId/Secret) for all accounts
+      - Simpler setup, works for most personal Gmail accounts
+      - Often acceptable for Workspace accounts unless restricted by admin
+      - One Google Cloud project serves all accounts
+    - **Option B (Per-Organization)**: Separate OAuth client per organization/domain
+      - Required when Workspace admin policies restrict external OAuth apps
+      - Each organization's admin creates/approves their own OAuth client
+      - Better for enterprise scenarios with strict policies
+    - **User Choice**: Configuration supports both models
   - **Critical - Authentication**: Each account has separate `UserCredential` instance
-    - Built with that account's specific OAuth credentials
+    - Built with that account's OAuth credentials (shared or per-org)
   - **Critical - Token Storage**: Each account has separate FileDataStore directory: `~/.credentials/calendar-mcp/{accountId}/`
   - Token isolation prevents cross-account contamination
   - Operations: Gmail (read/send/search), Calendar (CRUD)
@@ -140,11 +152,12 @@ graph TD
   - Uses Microsoft.Graph NuGet package (same as M365)
   - MSAL authentication with 'common' tenant for MSA support
   - **Manages multiple Outlook.com accounts** (different personal accounts) simultaneously
-  - **Critical - App Registration**: Each account requires its own Azure AD app registration (ClientId)
-    - Personal accounts use 'common' tenant but need individual app registrations
-    - User must consent to app permissions per account
+  - **App Registration**: Typically uses single shared app registration for all personal accounts
+    - One ClientId with 'common' tenant serves all Outlook.com accounts
+    - Each user consents to app permissions for their account
+    - Simpler than per-account registrations for personal use
   - **Critical - Authentication**: Each account has its own `IPublicClientApplication` instance
-    - Built with that account's specific ClientId and 'common' tenant
+    - Built with shared ClientId and 'common' tenant
   - **Critical - Token Storage**: Each account has separate token cache file: `msal_cache_{accountId}.bin`
   - Token isolation prevents cross-account contamination
   - Operations: email (read/send), calendar (CRUD)
@@ -168,34 +181,53 @@ Provider (M365, Google, Outlook.com)
   ↓
 Account (xebia-work, marimer-work, rocky-gmail, etc.)
   ↓
-App Registration / OAuth Client (unique per account/tenant)
+App Registration / OAuth Client (shared OR per-tenant, user configurable)
   ↓
 Authentication Instance (IPublicClientApplication / UserCredential)
   ↓
-Token Cache (unique per account)
+Token Cache (unique per account - ALWAYS separate)
 ```
 
-**Why Per-Account App Registrations?**
+**App Registration Models**
 
-#### Microsoft 365 / Outlook.com
-- **Tenant Isolation**: Each M365 tenant is a separate Azure AD instance
-- **Cannot Share**: App registrations are tenant-specific and cannot be shared across tenants
-- **Admin Consent**: Each tenant's administrator must approve the app registration
-- **Security Boundary**: Different tenants = different security domains
-- **Example**:
-  - Xebia M365 account → App registration in Xebia's Azure AD tenant
-  - Marimer M365 account → App registration in Marimer's Azure AD tenant
-  - Rocky Outlook.com → App registration in consumer Azure AD ('common' tenant)
+#### Model 1: Shared App Registration (Simpler)
+**Microsoft 365**:
+- **One app registration** used across multiple tenants
+- App must be multi-tenant ("Accounts in any organizational directory")
+- Works when tenant admins allow external apps
+- User's choice of ClientId in each account config
+- **Example**: Single ClientId (`aaa...`) shared by Xebia, Marimer, and other tenants
 
-#### Google Workspace / Gmail
-- **Workspace Policies**: Google Workspace admins can restrict OAuth clients
-- **Domain Restrictions**: Some organizations require domain-specific OAuth clients
-- **Personal vs Workspace**: Personal Gmail accounts can share OAuth clients, but Workspace accounts may require separate ones
-- **Best Practice**: Use separate OAuth client per organization to respect admin policies
-- **Example**:
-  - rocky@gmail.com (personal) → Can use shared OAuth client
-  - rocky@marimer.com (Workspace) → May require Marimer-specific OAuth client
-  - rocky@xebia.com (Workspace) → May require Xebia-specific OAuth client
+**Google**:
+- **One OAuth client** used across multiple accounts
+- Works for personal Gmail and most Workspace accounts
+- Single Google Cloud project with one set of credentials
+- **Example**: Single ClientId shared by personal Gmail + multiple Workspace accounts
+
+**Outlook.com**:
+- **One app registration** with 'common' tenant
+- Standard approach for personal accounts
+- All Outlook.com accounts share the same ClientId
+
+#### Model 2: Per-Tenant App Registration (When Required)
+**Microsoft 365**:
+- **Separate app registration per tenant**
+- Required when tenant IT policies block external apps
+- Each tenant admin creates their own app registration
+- More control, tenant-specific permissions
+- **Example**: Xebia uses ClientId `aaa...`, Marimer uses ClientId `bbb...`
+
+**Google Workspace**:
+- **Separate OAuth client per organization**
+- Required when Workspace admin restricts external OAuth apps
+- Each organization creates their own Google Cloud project
+- **Example**: Personal uses ClientId `123...`, Marimer Workspace uses ClientId `456...`
+
+**Why Configuration Flexibility?**
+- Different organizations have different security policies
+- Shared app = simpler setup, fewer app registrations to manage
+- Per-tenant app = required for strict IT environments
+- **Calendar-MCP supports both**: User configures ClientId per account as needed
 
 **Why Per-Account?**
 - Different accounts = different authentication contexts
@@ -473,53 +505,82 @@ The router's AI backend should be fully configurable to allow users to choose ba
 ### Account Configuration
 
 **Each account entry represents a unique authentication context with:**
-- Its own app registration / OAuth client credentials
+- Its own app registration / OAuth client credentials (can be shared or unique)
 - Its own authentication instance
-- Its own token cache
+- Its own token cache (ALWAYS unique)
+
+**Two Configuration Patterns Shown Below:**
+1. **Shared App Pattern**: M365 accounts share one multi-tenant ClientId
+2. **Per-Tenant App Pattern**: Each M365 tenant has its own ClientId
 
 ```json
 {
   "accounts": [
+    // Pattern 1: Shared App Registration (simpler)
+    // Both Xebia and Marimer use the SAME multi-tenant app
     {
-      "id": "xebia-work",                    // Unique account ID
-      "type": "microsoft365",                 // Provider type
+      "id": "xebia-work",
+      "type": "microsoft365",
       "displayName": "Xebia Work Account",
       "enabled": true,
       "domains": ["xebia.com"],
       "priority": 1,
-      "provider": {                           // Account-specific credentials
-        "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",  // Xebia's Azure AD tenant
-        "clientId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",  // App registration IN Xebia tenant
+      "provider": {
+        "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",  // Xebia's tenant
+        "clientId": "shared-app-1111-1111-1111-111111111111",  // SHARED multi-tenant app
         "scopes": [
           "https://graph.microsoft.com/Mail.ReadWrite",
           "https://graph.microsoft.com/Calendars.ReadWrite",
           "https://graph.microsoft.com/offline_access"
         ]
       }
-      // App: Created in Xebia's Azure AD
-      // Auth: IPublicClientApplication with Xebia's clientId + tenantId
-      // Token cache: msal_cache_xebia-work.bin
+      // App: Multi-tenant app registration shared across tenants
+      // Auth: IPublicClientApplication with shared clientId + Xebia tenantId
+      // Token cache: msal_cache_xebia-work.bin (SEPARATE despite shared app!)
     },
     {
-      "id": "marimer-work",                  // Different account
-      "type": "microsoft365",                 // Same provider type as xebia-work
+      "id": "marimer-work",
+      "type": "microsoft365",
       "displayName": "Marimer Work Account",
       "enabled": true,
       "domains": ["marimer.com"],
       "priority": 2,
       "provider": {
-        "tenantId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",  // Marimer's Azure AD tenant (DIFFERENT)
-        "clientId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",  // App registration IN Marimer tenant (DIFFERENT)
+        "tenantId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",  // Marimer's tenant
+        "clientId": "shared-app-1111-1111-1111-111111111111",  // SAME shared app!
         "scopes": [
           "https://graph.microsoft.com/Mail.ReadWrite",
           "https://graph.microsoft.com/Calendars.ReadWrite",
           "https://graph.microsoft.com/offline_access"
         ]
       }
-      // App: Created in Marimer's Azure AD (different from Xebia!)
-      // Auth: IPublicClientApplication with Marimer's clientId + tenantId
-      // Token cache: msal_cache_marimer-work.bin
+      // App: Same multi-tenant app as Xebia
+      // Auth: IPublicClientApplication with shared clientId + Marimer tenantId
+      // Token cache: msal_cache_marimer-work.bin (SEPARATE from Xebia!)
     },
+
+    // Pattern 2: Per-Tenant App Registration (when required by IT)
+    // Alternative config if IT policy requires separate apps
+    /*
+    {
+      "id": "xebia-work",
+      "type": "microsoft365",
+      "provider": {
+        "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "clientId": "xebia-app-aaaa-aaaa-aaaa-aaaaaaaaaaaa",  // Xebia-specific app
+        "scopes": [...]
+      }
+    },
+    {
+      "id": "marimer-work",
+      "type": "microsoft365",
+      "provider": {
+        "tenantId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
+        "clientId": "marimer-app-bbbb-bbbb-bbbb-bbbbbbbbbbbb",  // Marimer-specific app (DIFFERENT)
+        "scopes": [...]
+      }
+    },
+    */
     {
       "id": "rocky-gmail",                   // Personal Google account
       "type": "google",
@@ -590,12 +651,18 @@ The router's AI backend should be fully configurable to allow users to choose ba
 
 **Key Points**:
 - `id` field is unique per account and used as token cache identifier
-- **Each account has its own app registration / OAuth client credentials (ClientId)**
-- M365 accounts: Different `tenantId` + different `clientId` (app registrations cannot be shared across tenants)
-- Google accounts: May share `clientId` (personal) or require separate ones (Workspace)
+- **Each account specifies its app registration / OAuth client credentials (ClientId)**
+  - **Same ClientId**: Accounts can share app registration (simpler, works in many cases)
+  - **Different ClientId**: Accounts can use separate app registrations (required by some IT policies)
+- M365 accounts: 
+  - Can share `clientId` if using multi-tenant app registration
+  - Or use different `clientId` per tenant if required by IT policy
+- Google accounts: 
+  - Can share `clientId` across personal and many Workspace accounts
+  - Or use different `clientId` per organization if required by admin policy
 - Each account authenticates independently during onboarding
-- Token caches never shared between accounts, even if same provider type
-- **Cannot reuse app registrations across different tenants/organizations**
+- **Token caches ALWAYS separate per account** (even when sharing ClientId)
+- User decides based on their organization's requirements
 
 ## Recommended Local Models
 
@@ -764,50 +831,70 @@ MCP servers typically run in a non-interactive context (called by AI assistants)
 
 **BEFORE using calendar-mcp-setup, users must create app registrations:**
 
+**Note**: You can create ONE app registration shared across accounts, OR separate registrations per tenant/organization, depending on your IT policies.
+
 #### Microsoft 365 / Outlook.com Accounts
 
-**For each M365 tenant OR Outlook.com account, create an Azure AD app registration:**
+**Option A - Shared App Registration (Recommended for simplicity):**
 
-1. Go to [Azure Portal](https://portal.azure.com) → Azure Active Directory → App registrations
-2. Click "New registration"
-3. Configure:
-   - **Name**: "Calendar MCP - {TenantName}" (e.g., "Calendar MCP - Xebia")
-   - **Supported account types**: 
-     - M365: "Accounts in this organizational directory only" (single tenant)
-     - Outlook.com: "Personal Microsoft accounts only"
+1. Create **one multi-tenant app registration** to use across all M365 tenants:
+   - Go to [Azure Portal](https://portal.azure.com) → Azure Active Directory → App registrations
+   - Click "New registration"
+   - **Supported account types**: "Accounts in any organizational directory" (multi-tenant)
    - **Redirect URI**: Public client/native → `http://localhost`
-4. After creation, note the **Application (client) ID** and **Directory (tenant) ID**
-5. Go to "API permissions":
-   - Add: Microsoft Graph → Delegated permissions
-   - Select: `Mail.ReadWrite`, `Calendars.ReadWrite`, `offline_access`
-   - **May require admin consent** for organizational accounts
-6. Go to "Authentication":
+   - Note the **Application (client) ID** - use this for ALL M365 accounts
+   - Configure API permissions (Graph: Mail.ReadWrite, Calendars.ReadWrite, offline_access)
    - Enable "Allow public client flows" = Yes
+   - **Each tenant admin must consent** when their users first authenticate
 
-**Important**: Each tenant requires its own app registration. You cannot share app registrations across tenants.
+**Option B - Per-Tenant App Registration (When required by IT policy):**
+
+1. Create **separate app registration in each tenant's Azure AD**:
+
+   - Go to [Azure Portal](https://portal.azure.com) → Azure Active Directory → App registrations
+   - Click "New registration" **in each tenant**
+   - **Name**: "Calendar MCP - {TenantName}" (e.g., "Calendar MCP - Xebia")
+   - **Supported account types**: "Accounts in this organizational directory only" (single tenant)
+   - **Redirect URI**: Public client/native → `http://localhost`
+   - After creation, note the **Application (client) ID** (different per tenant)
+   - Configure API permissions (Graph: Mail.ReadWrite, Calendars.ReadWrite, offline_access)
+   - Enable "Allow public client flows" = Yes
+   - Each tenant has its own ClientId
+
+**Outlook.com (Personal Accounts):**
+- Create one app registration with "Personal Microsoft accounts only"
+- Use this shared ClientId for all Outlook.com accounts
+
+**Choose based on your needs**: Option A (shared) is simpler. Option B (per-tenant) is required if tenant IT policies block external apps.
 
 #### Google Workspace / Gmail Accounts
 
-**For each Google account (or organization), create OAuth credentials:**
+**Option A - Shared OAuth Client (Recommended for simplicity):**
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a new project (or use existing)
-   - **Personal Gmail**: Can share project across accounts
-   - **Workspace**: Consider separate project per organization
-3. Enable APIs:
-   - Gmail API
-   - Google Calendar API
-4. Go to "Credentials" → "Create Credentials" → "OAuth client ID"
-5. Configure:
+1. Create **one OAuth client** to use across all Google accounts:
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create a new project (or use existing)
+   - Enable APIs: Gmail API, Google Calendar API
+   - Go to "Credentials" → "Create Credentials" → "OAuth client ID"
    - **Application type**: Desktop app
-   - **Name**: "Calendar MCP - {Account}" (e.g., "Calendar MCP - Personal")
-6. After creation, download the credentials JSON
-7. Note the **Client ID** and **Client Secret**
-8. Configure OAuth consent screen:
-   - Add scopes: Gmail (read/send), Calendar (read/write)
-   - **May require verification** for external users
+   - Note the **Client ID** and **Client Secret** - use for ALL accounts
+   - Configure OAuth consent screen with required scopes
+   - Works for personal Gmail and most Workspace accounts
 
-**Important**: Workspace admins may require domain-specific OAuth clients.
+**Option B - Per-Organization OAuth Client (When required by policy):**
+
+1. Create **separate OAuth client per Workspace organization**:
+   - Each organization creates their own Google Cloud project
+   - Separate Client ID / Secret per organization
+   - Required when Workspace admin restricts external OAuth apps
+   - More control, org-specific approval
+
+**Choose based on your needs**: Option A (shared) works for most users. Option B (per-org) is required if Workspace admins enforce OAuth restrictions.
+
+**Summary**: 
+- **Shared app approach**: Simpler, one ClientId for multiple accounts, works in most cases
+- **Per-tenant/org approach**: Required when IT policies restrict external apps
+- **Calendar-MCP supports both**: Configure ClientId per account based on your requirements
 
 ### Solution: CLI Onboarding Tool
 
