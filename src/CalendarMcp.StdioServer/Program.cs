@@ -1,3 +1,5 @@
+using CalendarMcp.Core.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -59,11 +61,16 @@ public class Program
 
             builder.ConfigureServices((context, services) =>
             {
+                // Configure Calendar MCP settings
+                services.Configure<CalendarMcpConfiguration>(
+                    context.Configuration.GetSection("CalendarMcp"));
+                
+                // Add Calendar MCP core services (providers, tools, account registry)
+                services.AddCalendarMcpCore();
+                
+                // Configure MCP server with stdio transport
                 services.AddMcpServer()
                     .WithStdioServerTransport();
-                
-                // TODO: Add calendar-specific tools here
-                // services.AddMcpServer().WithTools<CalendarTools>();
             });
 
             var host = builder.Build();
