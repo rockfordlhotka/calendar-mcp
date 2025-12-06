@@ -1,4 +1,8 @@
-using System.ComponentModel;
+#!/usr/bin/env python
+import os
+
+# Content for GetCalendarEventsTool  
+content1 = """using System.ComponentModel;
 using System.Text.Json;
 using CalendarMcp.Core.Models;
 using CalendarMcp.Core.Services;
@@ -7,9 +11,6 @@ using ModelContextProtocol.Server;
 
 namespace CalendarMcp.Core.Tools;
 
-/// <summary>
-/// MCP tool for getting calendar events
-/// </summary>
 [McpServerToolType]
 public sealed class GetCalendarEventsTool(
     IAccountRegistry accountRegistry,
@@ -24,47 +25,38 @@ public sealed class GetCalendarEventsTool(
         [Description("Specific calendar ID, or omit for all calendars")] string? calendarId = null,
         [Description("Maximum number of events to retrieve")] int count = 50)
     {
-        logger.LogInformation("Getting calendar events: startDate={StartDate}, endDate={EndDate}, accountId={AccountId}, count={Count}",
-            startDate, endDate, accountId, count);
+        logger.LogInformation("Getting calendar events: {Start} to {End}, accountId={AccountId}",
+            startDate, endDate, accountId);
 
         try
         {
-            // Determine which accounts to query
             var accounts = string.IsNullOrEmpty(accountId)
                 ? await accountRegistry.GetAllAccountsAsync()
-                : new[] { await accountRegistry.GetAccountAsync(accountId) }.Where(a => a != null).Cast<AccountInfo>();
+                : new[] { await accountRegistry.GetAccountAsync(accountId) };
 
-            var validAccounts = accounts.ToList();
+            var validAccounts = accounts.Where(a => a != null).ToList();
 
             if (validAccounts.Count == 0)
             {
-                return JsonSerializer.Serialize(new
-                {
-                    error = accountId != null ? $"Account '{accountId}' not found" : "No accounts found"
-                });
+                return JsonSerializer.Serialize(new { error = accountId != null ? $"Account '{accountId}' not found" : "No accounts found" });
             }
 
-            // Query all accounts in parallel
             var tasks = validAccounts.Select(async account =>
             {
                 try
                 {
                     var provider = providerFactory.GetProvider(account!.Provider);
-                    var events = await provider.GetCalendarEventsAsync(
-                        account.Id, calendarId, startDate, endDate, count, CancellationToken.None);
-                    return events;
+                    return await provider.GetCalendarEventsAsync(account.AccountId, calendarId, startDate, endDate, count, CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error getting calendar events from account {AccountId}", account!.Id);
+                    logger.LogError(ex, "Error getting events from account {AccountId}", account!.AccountId);
                     return Enumerable.Empty<CalendarEvent>();
                 }
             });
 
             var results = await Task.WhenAll(tasks);
-            var allEvents = results.SelectMany(e => e)
-                .OrderBy(e => e.Start)
-                .ToList();
+            var allEvents = results.SelectMany(e => e).OrderBy(e => e.Start).ToList();
 
             var response = new
             {
@@ -83,22 +75,18 @@ public sealed class GetCalendarEventsTool(
                 })
             };
 
-            logger.LogInformation("Retrieved {Count} events from {AccountCount} accounts between {Start} and {End}",
-                allEvents.Count, validAccounts.Count, startDate, endDate);
-
-            return JsonSerializer.Serialize(response, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            logger.LogInformation("Retrieved {Count} events", allEvents.Count);
+            return JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error in get_calendar_events tool");
-            return JsonSerializer.Serialize(new
-            {
-                error = "Failed to get calendar events",
-                message = ex.Message
-            });
+            return JsonSerializer.Serialize(new { error = "Failed to get events", message = ex.Message });
         }
     }
 }
+"""
+
+with open('src/CalendarMcp.Core/Tools/GetCalendarEventsTool.cs', 'w', encoding='utf-8', newline='\n') as f:
+    f.write(content1)
+print('Wrote GetCalendarEventsTool.cs')

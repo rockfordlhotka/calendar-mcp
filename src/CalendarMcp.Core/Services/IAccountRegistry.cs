@@ -10,17 +10,17 @@ public interface IAccountRegistry
     /// <summary>
     /// Gets all configured accounts
     /// </summary>
-    IEnumerable<AccountInfo> GetAllAccounts();
+    Task<IEnumerable<AccountInfo>> GetAllAccountsAsync();
+    
+    /// <summary>
+    /// Gets account by ID
+    /// </summary>
+    Task<AccountInfo?> GetAccountAsync(string accountId);
     
     /// <summary>
     /// Gets enabled accounts only
     /// </summary>
     IEnumerable<AccountInfo> GetEnabledAccounts();
-    
-    /// <summary>
-    /// Gets account by ID
-    /// </summary>
-    AccountInfo? GetAccount(string accountId);
     
     /// <summary>
     /// Gets accounts by provider type

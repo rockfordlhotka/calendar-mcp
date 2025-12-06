@@ -2,7 +2,6 @@ using CalendarMcp.Core.Providers;
 using CalendarMcp.Core.Services;
 using CalendarMcp.Core.Tools;
 using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol.Server;
 
 namespace CalendarMcp.Core.Configuration;
 
@@ -25,14 +24,14 @@ public static class ServiceCollectionExtensions
         // Register account registry
         services.AddSingleton<IAccountRegistry, AccountRegistry>();
         
-        // Register MCP tools
-        services.AddSingleton<McpServerTool, ListAccountsTool>();
-        services.AddSingleton<McpServerTool, GetEmailsTool>();
-        services.AddSingleton<McpServerTool, SearchEmailsTool>();
-        services.AddSingleton<McpServerTool, ListCalendarsTool>();
-        services.AddSingleton<McpServerTool, GetCalendarEventsTool>();
-        services.AddSingleton<McpServerTool, SendEmailTool>();
-        services.AddSingleton<McpServerTool, CreateEventTool>();
+        // Register MCP tools (method-based pattern - just register the classes)
+        services.AddSingleton<ListAccountsTool>();
+        services.AddSingleton<GetEmailsTool>();
+        services.AddSingleton<SearchEmailsTool>();
+        services.AddSingleton<ListCalendarsTool>();
+        services.AddSingleton<GetCalendarEventsTool>();
+        services.AddSingleton<SendEmailTool>();
+        services.AddSingleton<CreateEventTool>();
         
         return services;
     }

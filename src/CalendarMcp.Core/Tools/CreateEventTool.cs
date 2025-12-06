@@ -1,213 +1,69 @@
+using System.ComponentModel;
+using System.Text.Json;
 using CalendarMcp.Core.Services;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using System.Text.Json;
 
 namespace CalendarMcp.Core.Tools;
 
 /// <summary>
 /// MCP tool for creating calendar events
 /// </summary>
-public class CreateEventTool : McpServerTool
+[McpServerToolType]
+public sealed class CreateEventTool(
+    IAccountRegistry accountRegistry,
+    IProviderServiceFactory providerFactory,
+    ILogger<CreateEventTool> logger)
 {
-    private readonly IAccountRegistry _accountRegistry;
-    private readonly IProviderServiceFactory _providerFactory;
-    private readonly ILogger<CreateEventTool> _logger;
-
-    public CreateEventTool(
-        IAccountRegistry accountRegistry,
-        IProviderServiceFactory providerFactory,
-        ILogger<CreateEventTool> logger)
+    [McpServerTool, Description("Create calendar event in specific calendar (requires explicit account selection or smart routing)")]
+    public async Task<string> CreateEvent(
+        [Description("Event subject/title")] string subject,
+        [Description("Event start date and time (ISO 8601 format)")] DateTime start,
+        [Description("Event end date and time (ISO 8601 format)")] DateTime end,
+        [Description("Specific account ID, or omit for smart routing")] string? accountId = null,
+        [Description("Specific calendar ID, or omit for default calendar")] string? calendarId = null,
+        [Description("Event location")] string? location = null,
+        [Description("List of attendee email addresses")] List<string>? attendees = null,
+        [Description("Event description/body")] string? body = null)
     {
-        _accountRegistry = accountRegistry;
-        _providerFactory = providerFactory;
-        _logger = logger;
-    }
+        logger.LogInformation("Creating event: subject={Subject}, start={Start}, end={End}, accountId={AccountId}",
+            subject, start, end, accountId);
 
-    public override Tool ProtocolTool => new Tool
-    {
-        Name = "create_event",
-        Description = "Create calendar event in specific calendar (requires explicit account selection or smart routing)",
-        InputSchema = JsonSerializer.Deserialize<JsonElement>("""
-        {
-            "type": "object",
-            "properties": {
-                "subject": {
-                    "type": "string",
-                    "description": "Event subject/title"
-                },
-                "start": {
-                    "type": "string",
-                    "description": "Event start date and time (ISO 8601 format)",
-                    "format": "date-time"
-                },
-                "end": {
-                    "type": "string",
-                    "description": "Event end date and time (ISO 8601 format)",
-                    "format": "date-time"
-                },
-                "accountId": {
-                    "type": "string",
-                    "description": "Specific account ID, or omit for smart routing"
-                },
-                "calendarId": {
-                    "type": "string",
-                    "description": "Specific calendar ID, or omit for default calendar"
-                },
-                "location": {
-                    "type": "string",
-                    "description": "Event location"
-                },
-                "attendees": {
-                    "type": "array",
-                    "description": "List of attendee email addresses",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "body": {
-                    "type": "string",
-                    "description": "Event description/body"
-                }
-            },
-            "required": ["subject", "start", "end"]
-        }
-        """)
-    };
-
-    public override IReadOnlyList<object> Metadata => Array.Empty<object>();
-
-    public override async ValueTask<CallToolResult> InvokeAsync(
-        RequestContext<CallToolRequestParams> request,
-        CancellationToken cancellationToken = default)
-    {
         try
         {
-            var args = request.Params?.Arguments;
-            
-            // Parse required parameters
-            if (args?.TryGetValue("subject", out var subjectObj) != true || subjectObj == null)
-            {
-                return new CallToolResult
-                {
-                    IsError = true,
-                    Content = new List<ContentBlock>
-                    {
-                        new TextContentBlock
-                        {
-                            Type = "text",
-                            Text = "Parameter 'subject' is required"
-                        }
-                    }
-                };
-            }
-            
-            if (args.TryGetValue("start", out var startObj) != true || startObj == null)
-            {
-                return new CallToolResult
-                {
-                    IsError = true,
-                    Content = new List<ContentBlock>
-                    {
-                        new TextContentBlock
-                        {
-                            Type = "text",
-                            Text = "Parameter 'start' is required"
-                        }
-                    }
-                };
-            }
-            
-            if (args.TryGetValue("end", out var endObj) != true || endObj == null)
-            {
-                return new CallToolResult
-                {
-                    IsError = true,
-                    Content = new List<ContentBlock>
-                    {
-                        new TextContentBlock
-                        {
-                            Type = "text",
-                            Text = "Parameter 'end' is required"
-                        }
-                    }
-                };
-            }
-            
-            string subject = subjectObj.ToString()!;
-            DateTime start = DateTime.Parse(startObj.ToString()!);
-            DateTime end = DateTime.Parse(endObj.ToString()!);
-            
-            // Parse optional parameters
-            string? accountId = args.TryGetValue("accountId", out var accountIdObj)
-                ? accountIdObj?.ToString()
-                : null;
-            
-            string? calendarId = args.TryGetValue("calendarId", out var calendarIdObj)
-                ? calendarIdObj?.ToString()
-                : null;
-            
-            string? location = args.TryGetValue("location", out var locationObj)
-                ? locationObj?.ToString()
-                : null;
-            
-            List<string>? attendees = args.TryGetValue("attendees", out var attendeesObj) && attendeesObj != null
-                ? JsonSerializer.Deserialize<List<string>>(attendeesObj.ToString()!)
-                : null;
-            
-            string? body = args.TryGetValue("body", out var bodyObj)
-                ? bodyObj?.ToString()
-                : null;
-
             // Determine which account to use
             Models.AccountInfo? account = null;
-            
+
             if (!string.IsNullOrEmpty(accountId))
             {
-                account = _accountRegistry.GetAccount(accountId);
+                account = await accountRegistry.GetAccountAsync(accountId);
                 if (account == null)
                 {
-                    return new CallToolResult
+                    return JsonSerializer.Serialize(new
                     {
-                        IsError = true,
-                        Content = new List<ContentBlock>
-                        {
-                            new TextContentBlock
-                            {
-                                Type = "text",
-                                Text = $"Account '{accountId}' not found"
-                            }
-                        }
-                    };
+                        error = $"Account '{accountId}' not found"
+                    });
                 }
             }
             else
             {
                 // Use first enabled account (could enhance with smarter routing)
-                account = _accountRegistry.GetEnabledAccounts().FirstOrDefault();
-                
+                var accounts = await accountRegistry.GetAllAccountsAsync();
+                account = accounts.FirstOrDefault();
+
                 if (account == null)
                 {
-                    return new CallToolResult
+                    return JsonSerializer.Serialize(new
                     {
-                        IsError = true,
-                        Content = new List<ContentBlock>
-                        {
-                            new TextContentBlock
-                            {
-                                Type = "text",
-                                Text = "No enabled account available to create event"
-                            }
-                        }
-                    };
+                        error = "No enabled account available to create event"
+                    });
                 }
             }
 
             // Create event
-            var provider = _providerFactory.GetProvider(account.Provider);
+            var provider = providerFactory.GetProvider(account.Provider);
             var eventId = await provider.CreateEventAsync(
-                account.Id, calendarId, subject, start, end, location, attendees, body, cancellationToken);
+                account.Id, calendarId, subject, start, end, location, attendees, body, CancellationToken.None);
 
             var result = new
             {
@@ -217,35 +73,21 @@ public class CreateEventTool : McpServerTool
                 calendarUsed = calendarId ?? "default"
             };
 
-            _logger.LogInformation("Created event in account {AccountId}", account.Id);
-            
-            return new CallToolResult
+            logger.LogInformation("Created event in account {AccountId}", account.Id);
+
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions
             {
-                Content = new List<ContentBlock>
-                {
-                    new TextContentBlock
-                    {
-                        Type = "text",
-                        Text = JsonSerializer.Serialize(result)
-                    }
-                }
-            };
+                WriteIndented = true
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in create_event tool");
-            return new CallToolResult
+            logger.LogError(ex, "Error in create_event tool");
+            return JsonSerializer.Serialize(new
             {
-                IsError = true,
-                Content = new List<ContentBlock>
-                {
-                    new TextContentBlock
-                    {
-                        Type = "text",
-                        Text = $"Error: {ex.Message}"
-                    }
-                }
-            };
+                error = "Failed to create event",
+                message = ex.Message
+            });
         }
     }
 }

@@ -33,19 +33,20 @@ public class AccountRegistry : IAccountRegistry
         _logger.LogInformation("Account registry initialized with {Count} accounts", _accounts.Count);
     }
 
-    public IEnumerable<AccountInfo> GetAllAccounts()
+    public Task<IEnumerable<AccountInfo>> GetAllAccountsAsync()
     {
-        return _accounts.Values;
+        return Task.FromResult<IEnumerable<AccountInfo>>(_accounts.Values);
+    }
+
+    public Task<AccountInfo?> GetAccountAsync(string accountId)
+    {
+        var account = _accounts.TryGetValue(accountId, out var acc) ? acc : null;
+        return Task.FromResult(account);
     }
 
     public IEnumerable<AccountInfo> GetEnabledAccounts()
     {
         return _accounts.Values.Where(a => a.Enabled);
-    }
-
-    public AccountInfo? GetAccount(string accountId)
-    {
-        return _accounts.TryGetValue(accountId, out var account) ? account : null;
     }
 
     public IEnumerable<AccountInfo> GetAccountsByProvider(string provider)
