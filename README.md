@@ -12,9 +12,12 @@ This MCP server provides AI assistants like Claude Desktop, ChatGPT, and GitHub 
 - **Search emails** across all inboxes simultaneously
 - **Coordinate scheduling** by finding times and emailing participants (future phase)
 
+> ⚠️ Right now only Claude Desktop is supported, because it is the only desktop AI assistant that can interact with MCP servers. Any AI assistant or tool that supports MCP servers should work with this MCP server.
+
 ## Problem Statement
 
 Professionals working with multiple organizations often juggle:
+
 - Multiple Microsoft 365 tenants (different work accounts)
 - Personal Outlook.com accounts
 - Google Workspace accounts
@@ -24,6 +27,7 @@ Currently, no AI assistant can access all these services simultaneously in a mul
 ## Key Features
 
 ### Phase 1 - Core Functionality (Current)
+
 - Multi-account authentication and management
 - Read-only email queries (unread, search, details)
 - Read-only calendar queries (events, availability)
@@ -31,12 +35,14 @@ Currently, no AI assistant can access all these services simultaneously in a mul
 - OpenTelemetry instrumentation for observability
 
 ### Phase 2 - Write Operations (Planned)
+
 - Send email from appropriate account (with smart routing)
 - Create calendar events in appropriate calendar (with smart routing)
 - Email threading and conversation tracking
 - Advanced search with filters and date ranges
 
 ### Phase 3 - AI-Assisted Scheduling (Future)
+
 - Intelligent meeting time suggestions across calendars
 - Automated meeting coordination via email
 - Conflict detection and resolution
@@ -45,12 +51,13 @@ Currently, no AI assistant can access all these services simultaneously in a mul
 ## Architecture
 
 This MCP server acts as an orchestration layer that:
+
 1. Exposes unified MCP tools to AI assistants
 2. Routes requests to appropriate accounts using intelligent routing
 3. Aggregates and deduplicates results from multiple sources
 4. Consumes existing Microsoft and Google MCP servers
 
-See [DESIGN.md](DESIGN.md) for detailed architecture and design specifications.
+See [DESIGN.md](docs/DESIGN.md) for detailed architecture and design specifications.
 
 ## Technical Stack
 
@@ -73,17 +80,20 @@ See [DESIGN.md](DESIGN.md) for detailed architecture and design specifications.
 ### Quick Start
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/rockfordlhotka/calendar-mcp.git
    cd calendar-mcp
    ```
 
 2. **Build the projects:**
+
    ```bash
    dotnet build
    ```
 
 3. **Set up authentication for M365 accounts:**
+
    ```bash
    # See docs/M365-SETUP.md for detailed Azure AD setup instructions
    dotnet run --project src/CalendarMcp.Cli/CalendarMcp.Cli.csproj -- \
@@ -92,6 +102,7 @@ See [DESIGN.md](DESIGN.md) for detailed architecture and design specifications.
    ```
 
 4. **Verify account setup:**
+
    ```bash
    dotnet run --project src/CalendarMcp.Cli/CalendarMcp.Cli.csproj -- \
      list-accounts \
@@ -99,6 +110,7 @@ See [DESIGN.md](DESIGN.md) for detailed architecture and design specifications.
    ```
 
 5. **Start the MCP server:**
+
    ```bash
    dotnet run --project src/CalendarMcp.StdioServer/CalendarMcp.StdioServer.csproj
    ```
@@ -108,16 +120,19 @@ See [DESIGN.md](DESIGN.md) for detailed architecture and design specifications.
 The project includes a CLI tool for easy account management:
 
 **Add Microsoft 365 Account:**
+
 ```bash
 calendar-mcp-cli add-m365-account
 ```
 
 **List Configured Accounts:**
+
 ```bash
 calendar-mcp-cli list-accounts
 ```
 
 **Test Account Authentication:**
+
 ```bash
 calendar-mcp-cli test-account <account-id>
 ```
@@ -129,43 +144,48 @@ See [M365 Setup Guide](docs/M365-SETUP.md) for complete Azure AD app registratio
 ### Configuration
 
 The server uses JSON-based configuration for:
+
 - Multiple account definitions (M365 tenants, Outlook.com, Google)
 - Smart router AI backend selection (local Ollama or cloud APIs)
 - OpenTelemetry exporters and settings
 
-See [DESIGN.md](DESIGN.md) for configuration examples.
+See [DESIGN.md](docs/DESIGN.md) for configuration examples.
 
 ## Use Cases
 
 ### Email Management
-```
+
+```text
 "Summarize all my unread emails from the last 24 hours"
 "What emails do I have about the Acme project?"
 "Search for emails from john@example.com across all my accounts"
 ```
 
 ### Calendar Management
-```
+
+```text
 "Show me my calendar for tomorrow across all accounts"
 "Find 1-hour slots next week where I'm free"
 "Do I have any conflicts on Friday?"
 ```
 
 ### Future: Meeting Coordination
-```
+
+```text
 "Schedule a 1-hour meeting with John and Sarah next week"
 → AI finds your availability, emails participants, proposes times
 ```
 
 ## Project Status
 
-🚧 **Early Development** - This project is in the design and initial implementation phase.
+🚧 **Phase 1 Testing** - Phase 1 of the project is largely complete and is in testing.
 
 ## Contributing
 
 Contributions are welcome! This is an open-source project aimed at solving a real problem for professionals managing multiple work contexts.
 
 ### Target Audience
+
 - Consultants managing multiple client accounts
 - Contractors with multiple work engagements
 - Professionals with separate work/personal accounts
@@ -178,6 +198,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Related Projects
 
 This server leverages these excellent MCP implementations:
+
 - [microsoft-mcp](https://github.com/elyxlz/microsoft-mcp) by elyxlz
 - [google_workspace_mcp](https://github.com/taylorwilsdon/google_workspace_mcp) by taylorwilsdon
 
