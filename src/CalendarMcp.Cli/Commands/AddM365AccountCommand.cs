@@ -112,9 +112,22 @@ public class AddM365AccountCommand : AsyncCommand<AddM365AccountCommand.Settings
             var configDict = JsonSerializer.Deserialize<Dictionary<string, object>>(root.GetRawText())
                 ?? new Dictionary<string, object>();
 
-            // Get or create accounts array
+            // Get or create CalendarMcp section
+            Dictionary<string, object> calendarMcpSection;
+            if (configDict.TryGetValue("CalendarMcp", out var calendarMcpObj))
+            {
+                var sectionJson = JsonSerializer.Serialize(calendarMcpObj);
+                calendarMcpSection = JsonSerializer.Deserialize<Dictionary<string, object>>(sectionJson)
+                    ?? new Dictionary<string, object>();
+            }
+            else
+            {
+                calendarMcpSection = new Dictionary<string, object>();
+            }
+
+            // Get or create Accounts array within CalendarMcp section
             var accounts = new List<Dictionary<string, object>>();
-            if (configDict.TryGetValue("accounts", out var accountsObj))
+            if (calendarMcpSection.TryGetValue("Accounts", out var accountsObj))
             {
                 var accountsJson = JsonSerializer.Serialize(accountsObj);
                 accounts = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(accountsJson)
@@ -123,27 +136,27 @@ public class AddM365AccountCommand : AsyncCommand<AddM365AccountCommand.Settings
 
             // Check if account already exists
             var existingIndex = accounts.FindIndex(a =>
-                a.TryGetValue("id", out var id) && id?.ToString() == accountId);
+                a.TryGetValue("Id", out var id) && id?.ToString() == accountId);
 
-            // Create new account config
+            // Create new account config (PascalCase to match CalendarMcpConfiguration model)
             var domainList = domains.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToList();
 
             var providerConfig = new Dictionary<string, string>
             {
-                { "tenantId", tenantId },
-                { "clientId", clientId }
+                { "TenantId", tenantId },
+                { "ClientId", clientId }
             };
 
             var newAccount = new Dictionary<string, object>
             {
-                { "id", accountId },
-                { "displayName", displayName },
-                { "provider", "microsoft365" },
-                { "enabled", true },
-                { "priority", priority },
-                { "domains", domainList },
-                { "providerConfig", providerConfig }
+                { "Id", accountId },
+                { "DisplayName", displayName },
+                { "Provider", "microsoft365" },
+                { "Enabled", true },
+                { "Priority", priority },
+                { "Domains", domainList },
+                { "ProviderConfig", providerConfig }
             };
 
             if (existingIndex >= 0)
@@ -157,7 +170,8 @@ public class AddM365AccountCommand : AsyncCommand<AddM365AccountCommand.Settings
                 accounts.Add(newAccount);
             }
 
-            configDict["accounts"] = accounts;
+            calendarMcpSection["Accounts"] = accounts;
+            configDict["CalendarMcp"] = calendarMcpSection;
 
             // Write back to file with formatting
             var options = new JsonSerializerOptions
