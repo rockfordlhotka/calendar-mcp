@@ -149,27 +149,30 @@ public class M365ProviderService : IM365ProviderService
             var authProvider = new BearerTokenAuthenticationProvider(token);
             var graphClient = new GraphServiceClient(authProvider);
 
+            // Microsoft Graph $search and $filter cannot be combined on messages.
+            // Use $search for text search (searches subject, body, sender, etc.)
+            // If date filters are specified, we'll filter client-side after retrieval.
+            
+            // Build KQL search query - search in subject and body
+            // KQL syntax: "subject:query OR body:query" or just the query for all fields
+            var searchQuery = query;
+            
+            _logger.LogDebug("Searching M365 emails with query: {Query}, fromDate: {FromDate}, toDate: {ToDate}", 
+                searchQuery, fromDate, toDate);
+
             var messages = await graphClient.Me.Messages.GetAsync(config =>
             {
-                config.QueryParameters.Top = count;
+                // Request more results if we need to filter by date client-side
+                config.QueryParameters.Top = (fromDate.HasValue || toDate.HasValue) ? count * 3 : count;
                 config.QueryParameters.Orderby = ["receivedDateTime desc"];
                 config.QueryParameters.Select = ["id", "subject", "from", "toRecipients", "ccRecipients", "receivedDateTime", "isRead", "hasAttachments", "bodyPreview"];
-                config.QueryParameters.Search = $"\"{query}\"";
-
-                // Build filter for date range if specified
-                var filters = new List<string>();
-                if (fromDate.HasValue)
-                {
-                    filters.Add($"receivedDateTime ge {fromDate.Value:yyyy-MM-ddTHH:mm:ssZ}");
-                }
-                if (toDate.HasValue)
-                {
-                    filters.Add($"receivedDateTime le {toDate.Value:yyyy-MM-ddTHH:mm:ssZ}");
-                }
-                if (filters.Count > 0)
-                {
-                    config.QueryParameters.Filter = string.Join(" and ", filters);
-                }
+                
+                // Use $search for text search across subject, body, sender
+                // The query should be quoted for exact phrase or unquoted for keyword search
+                config.QueryParameters.Search = $"\"{searchQuery}\"";
+                
+                // Note: $filter cannot be combined with $search on messages
+                // Date filtering will be done client-side if needed
             }, cancellationToken);
 
             var result = new List<EmailMessage>();
@@ -177,6 +180,14 @@ public class M365ProviderService : IM365ProviderService
             {
                 foreach (var message in messages.Value)
                 {
+                    var receivedDate = message.ReceivedDateTime?.DateTime ?? DateTime.MinValue;
+                    
+                    // Apply client-side date filtering if specified
+                    if (fromDate.HasValue && receivedDate < fromDate.Value)
+                        continue;
+                    if (toDate.HasValue && receivedDate > toDate.Value)
+                        continue;
+                    
                     result.Add(new EmailMessage
                     {
                         Id = message.Id ?? string.Empty,
@@ -188,10 +199,14 @@ public class M365ProviderService : IM365ProviderService
                         Cc = message.CcRecipients?.Select(r => r.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
                         Body = message.BodyPreview ?? string.Empty,
                         BodyFormat = "text",
-                        ReceivedDateTime = message.ReceivedDateTime?.DateTime ?? DateTime.MinValue,
+                        ReceivedDateTime = receivedDate,
                         IsRead = message.IsRead ?? false,
                         HasAttachments = message.HasAttachments ?? false
                     });
+                    
+                    // Stop once we have enough results
+                    if (result.Count >= count)
+                        break;
                 }
             }
 
@@ -201,7 +216,7 @@ public class M365ProviderService : IM365ProviderService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error searching emails from M365 account {AccountId}", accountId);
+            _logger.LogError(ex, "Error searching emails from M365 account {AccountId} with query '{Query}'", accountId, query);
             return Enumerable.Empty<EmailMessage>();
         }
     }
