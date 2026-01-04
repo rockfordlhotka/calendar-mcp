@@ -21,16 +21,37 @@ public class AccountRegistry : IAccountRegistry
 
         // Load accounts from configuration
         var config = configuration.Value;
-        if (config.Accounts != null)
+        if (config.Accounts != null && config.Accounts.Count > 0)
         {
+            _logger.LogInformation("Loading {Count} account(s) from configuration...", config.Accounts.Count);
+            
             foreach (var account in config.Accounts)
             {
                 _accounts[account.Id] = account;
-                _logger.LogInformation("Loaded account {AccountId} ({Provider})", account.Id, account.Provider);
+                
+                var domains = account.Domains.Count > 0 
+                    ? string.Join(", ", account.Domains) 
+                    : "(none)";
+                var status = account.Enabled ? "enabled" : "disabled";
+                
+                _logger.LogInformation(
+                    "  Account: {AccountId} | {DisplayName} | Provider: {Provider} | Domains: {Domains} | Status: {Status} | Priority: {Priority}",
+                    account.Id,
+                    account.DisplayName,
+                    account.Provider,
+                    domains,
+                    status,
+                    account.Priority);
             }
+            
+            var enabledCount = _accounts.Values.Count(a => a.Enabled);
+            _logger.LogInformation("Account registry initialized: {EnabledCount} enabled, {DisabledCount} disabled",
+                enabledCount, _accounts.Count - enabledCount);
         }
-
-        _logger.LogInformation("Account registry initialized with {Count} accounts", _accounts.Count);
+        else
+        {
+            _logger.LogWarning("No accounts found in configuration. Add accounts using the CLI: calendar-mcp-cli add-m365-account");
+        }
     }
 
     public Task<IEnumerable<AccountInfo>> GetAllAccountsAsync()

@@ -1,6 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 using CalendarMcp.Core.Services;
+using CalendarMcp.Core.Configuration;
 using System.Text.Json;
 using System.ComponentModel;
 
@@ -15,7 +16,7 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
 
     public class Settings : CommandSettings
     {
-        [Description("Path to appsettings.json")]
+        [Description("Path to appsettings.json (default: %LOCALAPPDATA%/CalendarMcp/appsettings.json)")]
         [CommandOption("--config")]
         public string? ConfigPath { get; init; }
 
@@ -38,15 +39,18 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
         AnsiConsole.MarkupLine($"[bold]Testing Account: {settings.AccountId}[/]");
         AnsiConsole.WriteLine();
 
-        // Determine config file path
-        var configPath = settings.ConfigPath 
-            ?? Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+        // Determine config file path - use shared ConfigurationPaths by default
+        var configPath = settings.ConfigPath ?? ConfigurationPaths.GetConfigFilePath();
 
         if (!File.Exists(configPath))
         {
             AnsiConsole.MarkupLine($"[red]Error: Configuration file not found at {configPath}[/]");
+            AnsiConsole.MarkupLine($"[yellow]Default location: {ConfigurationPaths.GetConfigFilePath()}[/]");
             return 1;
         }
+
+        AnsiConsole.MarkupLine($"[dim]Using configuration: {configPath}[/]");
+        AnsiConsole.WriteLine();
 
         try
         {
@@ -54,7 +58,9 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             var jsonString = await File.ReadAllTextAsync(configPath);
             var jsonDoc = JsonDocument.Parse(jsonString);
 
-            if (!jsonDoc.RootElement.TryGetProperty("accounts", out var accountsElement))
+            // Look for CalendarMcp.Accounts (PascalCase) in the config
+            if (!jsonDoc.RootElement.TryGetProperty("CalendarMcp", out var calendarMcpElement) ||
+                !calendarMcpElement.TryGetProperty("Accounts", out var accountsElement))
             {
                 AnsiConsole.MarkupLine("[red]Error: No accounts configured.[/]");
                 return 1;
@@ -62,7 +68,7 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
 
             var accounts = accountsElement.Deserialize<List<Dictionary<string, JsonElement>>>();
             var account = accounts?.FirstOrDefault(a => 
-                a.TryGetValue("id", out var idElem) && idElem.GetString() == settings.AccountId);
+                a.TryGetValue("Id", out var idElem) && idElem.GetString() == settings.AccountId);
 
             if (account == null)
             {
@@ -71,7 +77,7 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             }
 
             // Get account details
-            var provider = account.TryGetValue("provider", out var provElem) ? provElem.GetString() : "";
+            var provider = account.TryGetValue("Provider", out var provElem) ? provElem.GetString() : "";
             
             if (provider != "microsoft365")
             {
@@ -80,17 +86,17 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             }
 
             // Get provider config
-            if (!account.TryGetValue("providerConfig", out var providerConfigElem))
+            if (!account.TryGetValue("ProviderConfig", out var providerConfigElem))
             {
-                AnsiConsole.MarkupLine($"[red]Error: Account missing providerConfig.[/]");
+                AnsiConsole.MarkupLine($"[red]Error: Account missing ProviderConfig.[/]");
                 return 1;
             }
 
             var providerConfig = providerConfigElem.Deserialize<Dictionary<string, string>>() 
                 ?? new Dictionary<string, string>();
 
-            if (!providerConfig.TryGetValue("tenantId", out var tenantId) || 
-                !providerConfig.TryGetValue("clientId", out var clientId))
+            if (!providerConfig.TryGetValue("TenantId", out var tenantId) || 
+                !providerConfig.TryGetValue("ClientId", out var clientId))
             {
                 AnsiConsole.MarkupLine($"[red]Error: Account missing tenantId or clientId.[/]");
                 return 1;

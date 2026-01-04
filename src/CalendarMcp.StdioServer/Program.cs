@@ -15,6 +15,14 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        // Use shared configuration paths (ensures consistency with CLI and token storage)
+        var configDir = ConfigurationPaths.GetDataDirectory();
+        var logDir = ConfigurationPaths.GetLogDirectory();
+        var configPath = ConfigurationPaths.GetConfigFilePath();
+        
+        // Ensure directories exist
+        ConfigurationPaths.EnsureDataDirectoryExists();
+        
         var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
         
         // If no OTLP endpoint, use Serilog for file logging as fallback
@@ -25,16 +33,52 @@ public class Program
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .WriteTo.File(
-                    path: "logs/calendar-mcp-.log",
+                    path: Path.Combine(logDir, "calendar-mcp-.log"),
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 7,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
         }
+        
+        Log.Information("Calendar MCP Server starting. Config directory: {ConfigDir}", configDir);
 
         try
         {
-            var builder = Host.CreateDefaultBuilder(args);
+            var builder = Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((context, config) =>
+                {
+                    // Clear default configuration sources
+                    config.Sources.Clear();
+                    
+                    // Add configuration from the user data directory (primary)
+                    if (File.Exists(configPath))
+                    {
+                        config.AddJsonFile(configPath, optional: false, reloadOnChange: true);
+                        Log.Information("Loaded configuration from {ConfigPath}", configPath);
+                    }
+                    else
+                    {
+                        // Fallback: try application directory (for development)
+                        var appDir = AppContext.BaseDirectory;
+                        var appConfigPath = Path.Combine(appDir, "appsettings.json");
+                        if (File.Exists(appConfigPath))
+                        {
+                            config.AddJsonFile(appConfigPath, optional: false, reloadOnChange: true);
+                            Log.Information("Loaded configuration from application directory: {ConfigPath}", appConfigPath);
+                        }
+                        else
+                        {
+                            Log.Warning("No appsettings.json found. Expected at: {UserConfigPath} or {AppConfigPath}", 
+                                configPath, appConfigPath);
+                        }
+                    }
+                    
+                    // Add environment variables (can override file settings)
+                    config.AddEnvironmentVariables("CALENDAR_MCP_");
+                    
+                    // Add command line args
+                    config.AddCommandLine(args);
+                });
 
             if (!string.IsNullOrEmpty(otlpEndpoint))
             {

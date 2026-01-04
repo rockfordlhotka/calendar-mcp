@@ -1,5 +1,6 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
+using CalendarMcp.Core.Configuration;
 using System.Text.Json;
 using System.ComponentModel;
 
@@ -12,7 +13,7 @@ public class ListAccountsCommand : AsyncCommand<ListAccountsCommand.Settings>
 {
     public class Settings : CommandSettings
     {
-        [Description("Path to appsettings.json")]
+        [Description("Path to appsettings.json (default: %LOCALAPPDATA%/CalendarMcp/appsettings.json)")]
         [CommandOption("--config")]
         public string? ConfigPath { get; init; }
     }
@@ -26,16 +27,19 @@ public class ListAccountsCommand : AsyncCommand<ListAccountsCommand.Settings>
         AnsiConsole.MarkupLine("[bold]Configured Accounts[/]");
         AnsiConsole.WriteLine();
 
-        // Determine config file path
-        var configPath = settings.ConfigPath 
-            ?? Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+        // Determine config file path - use shared ConfigurationPaths by default
+        var configPath = settings.ConfigPath ?? ConfigurationPaths.GetConfigFilePath();
 
         if (!File.Exists(configPath))
         {
             AnsiConsole.MarkupLine($"[red]Error: Configuration file not found at {configPath}[/]");
-            AnsiConsole.MarkupLine("[yellow]Please specify the correct path using --config option[/]");
+            AnsiConsole.MarkupLine($"[yellow]Default location: {ConfigurationPaths.GetConfigFilePath()}[/]");
+            AnsiConsole.MarkupLine("[dim]Run 'add-m365-account' to create the configuration and add an account.[/]");
             return 1;
         }
+
+        AnsiConsole.MarkupLine($"[dim]Using configuration: {configPath}[/]");
+        AnsiConsole.WriteLine();
 
         try
         {
@@ -43,7 +47,9 @@ public class ListAccountsCommand : AsyncCommand<ListAccountsCommand.Settings>
             var jsonString = await File.ReadAllTextAsync(configPath);
             var jsonDoc = JsonDocument.Parse(jsonString);
 
-            if (!jsonDoc.RootElement.TryGetProperty("accounts", out var accountsElement))
+            // Look for CalendarMcp.Accounts (PascalCase) in the config
+            if (!jsonDoc.RootElement.TryGetProperty("CalendarMcp", out var calendarMcpElement) ||
+                !calendarMcpElement.TryGetProperty("Accounts", out var accountsElement))
             {
                 AnsiConsole.MarkupLine("[yellow]No accounts configured.[/]");
                 return 0;
@@ -69,14 +75,14 @@ public class ListAccountsCommand : AsyncCommand<ListAccountsCommand.Settings>
 
             foreach (var account in accounts)
             {
-                var id = account.TryGetValue("id", out var idElem) ? idElem.GetString() ?? "" : "";
-                var displayName = account.TryGetValue("displayName", out var nameElem) ? nameElem.GetString() ?? "" : "";
-                var provider = account.TryGetValue("provider", out var provElem) ? provElem.GetString() ?? "" : "";
-                var enabled = account.TryGetValue("enabled", out var enElem) && enElem.GetBoolean();
-                var priority = account.TryGetValue("priority", out var prioElem) ? prioElem.GetInt32() : 0;
+                var id = account.TryGetValue("Id", out var idElem) ? idElem.GetString() ?? "" : "";
+                var displayName = account.TryGetValue("DisplayName", out var nameElem) ? nameElem.GetString() ?? "" : "";
+                var provider = account.TryGetValue("Provider", out var provElem) ? provElem.GetString() ?? "" : "";
+                var enabled = account.TryGetValue("Enabled", out var enElem) && enElem.GetBoolean();
+                var priority = account.TryGetValue("Priority", out var prioElem) ? prioElem.GetInt32() : 0;
                 
                 var domains = "";
-                if (account.TryGetValue("domains", out var domainsElem) && domainsElem.ValueKind == JsonValueKind.Array)
+                if (account.TryGetValue("Domains", out var domainsElem) && domainsElem.ValueKind == JsonValueKind.Array)
                 {
                     var domainList = domainsElem.Deserialize<List<string>>() ?? new List<string>();
                     domains = string.Join(", ", domainList);

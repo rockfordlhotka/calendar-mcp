@@ -1,6 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 using CalendarMcp.Core.Services;
+using CalendarMcp.Core.Configuration;
 using System.Text.Json;
 using System.ComponentModel;
 
@@ -15,7 +16,7 @@ public class AddM365AccountCommand : AsyncCommand<AddM365AccountCommand.Settings
 
     public class Settings : CommandSettings
     {
-        [Description("Path to appsettings.json")]
+        [Description("Path to appsettings.json (default: %LOCALAPPDATA%/CalendarMcp/appsettings.json)")]
         [CommandOption("--config")]
         public string? ConfigPath { get; init; }
     }
@@ -34,16 +35,28 @@ public class AddM365AccountCommand : AsyncCommand<AddM365AccountCommand.Settings
         AnsiConsole.MarkupLine("[bold]Add Microsoft 365 Account[/]");
         AnsiConsole.WriteLine();
 
-        // Determine config file path
-        var configPath = settings.ConfigPath 
-            ?? Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+        // Determine config file path - use shared ConfigurationPaths by default
+        var configPath = settings.ConfigPath ?? ConfigurationPaths.GetConfigFilePath();
 
-        if (!File.Exists(configPath))
+        // Ensure the directory and default config exist
+        if (string.IsNullOrEmpty(settings.ConfigPath))
+        {
+            var created = ConfigurationPaths.EnsureConfigFileExists();
+            if (created)
+            {
+                AnsiConsole.MarkupLine($"[yellow]Created new configuration file at {configPath}[/]");
+                AnsiConsole.WriteLine();
+            }
+        }
+        else if (!File.Exists(configPath))
         {
             AnsiConsole.MarkupLine($"[red]Error: Configuration file not found at {configPath}[/]");
-            AnsiConsole.MarkupLine("[yellow]Please specify the correct path using --config option[/]");
+            AnsiConsole.MarkupLine($"[yellow]Default location: {ConfigurationPaths.GetConfigFilePath()}[/]");
             return 1;
         }
+
+        AnsiConsole.MarkupLine($"[dim]Using configuration: {configPath}[/]");
+        AnsiConsole.WriteLine();
 
         // Prompt for account details
         var accountId = AnsiConsole.Prompt(

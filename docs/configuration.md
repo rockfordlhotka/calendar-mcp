@@ -4,14 +4,47 @@
 
 Calendar-MCP uses JSON configuration files for accounts, routing, and telemetry settings. Configuration supports environment variables and encrypted sections.
 
-## Configuration Files
+## Configuration Location
 
-### Primary Configuration
-- **Location**: `appsettings.json` in application directory
-- **Format**: JSON
-- **Environment Overrides**: `appsettings.Development.json`, `appsettings.Production.json`
+Calendar-MCP stores all user-specific data in a consistent location:
 
-### Environment Variables
+### Windows
+```
+%LOCALAPPDATA%\CalendarMcp\
+├── appsettings.json          # Main configuration file
+├── msal_cache_*.bin          # M365/Outlook.com token caches (encrypted)
+└── logs\                     # Server logs
+    └── calendar-mcp-*.log
+```
+
+### Linux/macOS
+```
+~/.local/share/CalendarMcp/
+├── appsettings.json          # Main configuration file
+└── logs/                     # Server logs
+    └── calendar-mcp-*.log
+~/.credentials/calendar-mcp/  # Google token storage
+└── {accountId}/
+```
+
+### Configuration Loading Priority
+
+1. **Environment Variable Override**: Set `CALENDAR_MCP_CONFIG` to specify a custom config directory or file path
+2. **User Data Directory**: `%LOCALAPPDATA%\CalendarMcp\appsettings.json` (Windows) or `~/.local/share/CalendarMcp/appsettings.json` (Linux/macOS)
+3. **Application Directory** (fallback for development): `appsettings.json` in the same directory as the executable
+
+### Environment Variable Override
+
+To use a custom configuration location:
+```bash
+# Point to a directory containing appsettings.json
+set CALENDAR_MCP_CONFIG=C:\MyConfig\CalendarMcp
+
+# Or point directly to a config file
+set CALENDAR_MCP_CONFIG=C:\MyConfig\my-calendar-config.json
+```
+
+### Additional Environment Variable Overrides
 - Prefix: `CALENDAR_MCP_`
 - Example: `CALENDAR_MCP_Router__Backend=ollama`
 
@@ -19,126 +52,71 @@ Calendar-MCP uses JSON configuration files for accounts, routing, and telemetry 
 
 ```json
 {
-  "accounts": [
-    {
-      "id": "xebia-work",
-      "displayName": "Xebia Work Account",
-      "provider": "microsoft365",
-      "enabled": true,
-      "priority": 1,
-      "domains": ["xebia.com"],
-      "configuration": {
-        "tenantId": "12345678-1234-1234-1234-123456789abc",
-        "clientId": "87654321-4321-4321-4321-cba987654321",
-        "scopes": [
-          "Mail.Read",
-          "Mail.Send",
-          "Calendars.ReadWrite"
-        ]
+  "CalendarMcp": {
+    "Accounts": [
+      {
+        "Id": "xebia-work",
+        "DisplayName": "Xebia Work Account",
+        "Provider": "microsoft365",
+        "Enabled": true,
+        "Priority": 1,
+        "Domains": ["xebia.com"],
+        "ProviderConfig": {
+          "TenantId": "12345678-1234-1234-1234-123456789abc",
+          "ClientId": "87654321-4321-4321-4321-cba987654321"
+        }
+      },
+      {
+        "Id": "marimer-work",
+        "DisplayName": "Marimer Consulting",
+        "Provider": "microsoft365",
+        "Enabled": true,
+        "Priority": 2,
+        "Domains": ["marimer.com", "lhotka.net"],
+        "ProviderConfig": {
+          "TenantId": "87654321-4321-4321-4321-123456789xyz",
+          "ClientId": "87654321-4321-4321-4321-cba987654321"
+        }
+      },
+      {
+        "Id": "rocky-gmail",
+        "DisplayName": "Personal Gmail",
+        "Provider": "google",
+        "Enabled": true,
+        "Priority": 3,
+        "Domains": ["gmail.com"],
+        "ProviderConfig": {
+          "ClientId": "123456789-abcdefg.apps.googleusercontent.com",
+          "ClientSecret": "GOCSPX-...",
+          "UserEmail": "rocky@gmail.com"
+        }
+      },
+      {
+        "Id": "rocky-outlook",
+        "DisplayName": "Personal Outlook",
+        "Provider": "outlook.com",
+        "Enabled": true,
+        "Priority": 4,
+        "Domains": ["outlook.com", "hotmail.com"],
+        "ProviderConfig": {
+          "ClientId": "abcdef12-3456-7890-abcd-ef1234567890"
+        }
       }
+    ],
+    "Router": {
+      "Backend": "ollama",
+      "Model": "phi3.5:3.8b",
+      "Endpoint": "http://localhost:11434",
+      "Temperature": 0.1,
+      "MaxTokens": 500,
+      "TimeoutSeconds": 10,
+      "FallbackToDefault": true,
+      "DefaultAccountId": "xebia-work"
     },
-    {
-      "id": "marimer-work",
-      "displayName": "Marimer Consulting",
-      "provider": "microsoft365",
-      "enabled": true,
-      "priority": 2,
-      "domains": ["marimer.com", "lhotka.net"],
-      "configuration": {
-        "tenantId": "87654321-4321-4321-4321-123456789xyz",
-        "clientId": "87654321-4321-4321-4321-cba987654321",
-        "scopes": [
-          "Mail.Read",
-          "Mail.Send",
-          "Calendars.ReadWrite"
-        ]
-      }
-    },
-    {
-      "id": "rocky-gmail",
-      "displayName": "Personal Gmail",
-      "provider": "google",
-      "enabled": true,
-      "priority": 3,
-      "domains": ["gmail.com"],
-      "configuration": {
-        "clientId": "123456789-abcdefg.apps.googleusercontent.com",
-        "clientSecret": "GOCSPX-...",
-        "userEmail": "rocky@gmail.com",
-        "scopes": [
-          "https://www.googleapis.com/auth/gmail.readonly",
-          "https://www.googleapis.com/auth/gmail.send",
-          "https://www.googleapis.com/auth/calendar"
-        ]
-      }
-    },
-    {
-      "id": "rocky-outlook",
-      "displayName": "Personal Outlook",
-      "provider": "outlook.com",
-      "enabled": true,
-      "priority": 4,
-      "domains": ["outlook.com", "hotmail.com"],
-      "configuration": {
-        "clientId": "abcdef12-3456-7890-abcd-ef1234567890",
-        "scopes": [
-          "Mail.Read",
-          "Mail.Send",
-          "Calendars.ReadWrite"
-        ]
-      }
+    "Telemetry": {
+      "Enabled": true,
+      "ServiceName": "calendar-mcp"
     }
-  ],
-  "router": {
-    "backend": "ollama",
-    "model": "phi3.5:3.8b",
-    "endpoint": "http://localhost:11434",
-    "temperature": 0.1,
-    "maxTokens": 500,
-    "timeoutSeconds": 10,
-    "fallbackToDefault": true,
-    "defaultAccountId": "xebia-work",
-    "caching": {
-      "enabled": true,
-      "ttlMinutes": 30
-    }
-  },
-  "telemetry": {
-    "enabled": true,
-    "serviceName": "calendar-mcp",
-    "serviceVersion": "1.0.0",
-    "console": {
-      "enabled": true,
-      "logLevel": "Information"
-    },
-    "otlp": {
-      "enabled": false,
-      "endpoint": "http://localhost:4317"
-    },
-    "jaeger": {
-      "enabled": false,
-      "agentHost": "localhost",
-      "agentPort": 6831
-    },
-    "azureMonitor": {
-      "enabled": false,
-      "connectionString": "InstrumentationKey=..."
-    },
-    "sampling": {
-      "alwaysSample": false,
-      "samplingRate": 0.1
-    },
-    "redaction": {
-      "enabled": true,
-      "redactEmailContent": true,
-      "redactTokens": true,
-      "redactPii": true
-    }
-  },
-  "server": {
-    "transport": "stdio",
-    "name": "calendar-mcp",
-    "version": "1.0.0"
   }
 }
 ```
