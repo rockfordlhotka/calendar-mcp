@@ -32,6 +32,11 @@ app.Configure(config =>
         .WithExample(new[] { "add-m365-account" })
         .WithExample(new[] { "add-m365-account", "--config", "/path/to/appsettings.json" });
 
+    config.AddCommand<AddOutlookComAccountCommand>("add-outlook-account")
+        .WithDescription("Add a new Outlook.com personal account (Outlook.com, Hotmail, Live)")
+        .WithExample(new[] { "add-outlook-account" })
+        .WithExample(new[] { "add-outlook-account", "--config", "/path/to/appsettings.json" });
+
     config.AddCommand<ListAccountsCommand>("list-accounts")
         .WithDescription("List all configured accounts")
         .WithExample(new[] { "list-accounts" })

@@ -79,14 +79,17 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             // Get account details
             var provider = account.TryGetValue("Provider", out var provElem) ? provElem.GetString() : "";
             
-            if (provider != "microsoft365")
+            // Support both M365 and Outlook.com accounts (both use MSAL/Graph)
+            if (provider != "microsoft365" && provider != "outlook.com")
             {
-                AnsiConsole.MarkupLine($"[red]Error: Only Microsoft 365 accounts are supported for testing at this time.[/]");
+                AnsiConsole.MarkupLine($"[red]Error: Only Microsoft 365 and Outlook.com accounts are supported for testing at this time.[/]");
+                AnsiConsole.MarkupLine($"[dim]Account provider: {provider}[/]");
                 return 1;
             }
 
-            // Get provider config
-            if (!account.TryGetValue("ProviderConfig", out var providerConfigElem))
+            // Get provider config - try both PascalCase and camelCase
+            if (!account.TryGetValue("ProviderConfig", out var providerConfigElem) &&
+                !account.TryGetValue("providerConfig", out providerConfigElem))
             {
                 AnsiConsole.MarkupLine($"[red]Error: Account missing ProviderConfig.[/]");
                 return 1;
@@ -95,8 +98,13 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             var providerConfig = providerConfigElem.Deserialize<Dictionary<string, string>>() 
                 ?? new Dictionary<string, string>();
 
-            if (!providerConfig.TryGetValue("TenantId", out var tenantId) || 
-                !providerConfig.TryGetValue("ClientId", out var clientId))
+            // Try both PascalCase and camelCase for config keys
+            if (!providerConfig.TryGetValue("TenantId", out var tenantId))
+                providerConfig.TryGetValue("tenantId", out tenantId);
+            if (!providerConfig.TryGetValue("ClientId", out var clientId))
+                providerConfig.TryGetValue("clientId", out clientId);
+                
+            if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId))
             {
                 AnsiConsole.MarkupLine($"[red]Error: Account missing tenantId or clientId.[/]");
                 return 1;
@@ -141,7 +149,8 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             else
             {
                 AnsiConsole.MarkupLine("[yellow]! No cached token found. Interactive authentication required.[/]");
-                AnsiConsole.MarkupLine("[dim]Run 'add-m365-account' to authenticate this account.[/]");
+                var authCommand = provider == "outlook.com" ? "add-outlook-account" : "add-m365-account";
+                AnsiConsole.MarkupLine($"[dim]Run '{authCommand}' to authenticate this account.[/]");
                 return 1;
             }
         }
