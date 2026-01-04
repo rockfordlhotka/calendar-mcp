@@ -18,10 +18,10 @@ Get list of all configured accounts across all providers.
 {
   "accounts": [
     {
-      "id": "xebia-work",
-      "displayName": "Xebia Work Account",
+      "id": "work-account",
+      "displayName": "Work Account",
       "provider": "microsoft365",
-      "domains": ["xebia.com"],
+      "domains": ["example.com"],
       "enabled": true
     }
   ]
@@ -44,9 +44,9 @@ Get emails (unread/read, filtered by count) for specific account or all accounts
   "emails": [
     {
       "id": "msg-123",
-      "accountId": "xebia-work",
+      "accountId": "work-account",
       "subject": "Project Update",
-      "from": "colleague@xebia.com",
+      "from": "colleague@example.com",
       "receivedDateTime": "2025-12-04T10:30:00Z",
       "isRead": false,
       "hasAttachments": true
@@ -89,16 +89,16 @@ Get a contextual, topic-grouped summary of emails across all accounts with perso
       "keywords": ["milestone", "sprint", "deployment"],
       "emailCount": 23,
       "unreadCount": 5,
-      "accountIds": ["xebia-work", "marimer-work"],
+      "accountIds": ["work-account", "tenant2-account"],
       "earliestDate": "2025-12-01T08:00:00Z",
       "latestDate": "2025-12-04T16:30:00Z",
-      "uniqueSenders": ["pm@xebia.com", "dev@marimer.com"],
+      "uniqueSenders": ["pm@example.com", "dev@company.com"],
       "sampleEmails": [
         {
           "id": "msg-123",
-          "accountId": "xebia-work",
+          "accountId": "work-account",
           "subject": "Sprint 23 Complete",
-          "from": "pm@xebia.com",
+          "from": "pm@example.com",
           "fromName": "Project Manager",
           "receivedDateTime": "2025-12-04T16:30:00Z",
           "isRead": false,
@@ -112,10 +112,10 @@ Get a contextual, topic-grouped summary of emails across all accounts with perso
       "keywords": ["meeting", "schedule", "call"],
       "emailCount": 18,
       "unreadCount": 3,
-      "accountIds": ["xebia-work", "rocky-gmail"],
+      "accountIds": ["work-account", "personal-gmail"],
       "earliestDate": "2025-12-02T09:00:00Z",
       "latestDate": "2025-12-04T14:00:00Z",
-      "uniqueSenders": ["colleague@xebia.com", "friend@gmail.com"],
+      "uniqueSenders": ["colleague@example.com", "friend@gmail.com"],
       "sampleEmails": []
     }
   ],
@@ -123,33 +123,33 @@ Get a contextual, topic-grouped summary of emails across all accounts with perso
     {
       "email": {
         "id": "msg-456",
-        "accountId": "rocky-gmail",
-        "subject": "Re: Xebia Project",
-        "from": "client@xebia.com",
+        "accountId": "personal-gmail",
+        "subject": "Re: Work Project",
+        "from": "client@example.com",
         "receivedDateTime": "2025-12-04T10:00:00Z",
         "isRead": true
       },
-      "receivedOnAccount": "rocky-gmail",
-      "expectedAccount": "xebia-work",
-      "reason": "Sender from xebia.com typically communicates via Xebia Work Account",
+      "receivedOnAccount": "personal-gmail",
+      "expectedAccount": "work-account",
+      "reason": "Sender from example.com typically communicates via Work Account",
       "confidence": 0.8
     }
   ],
   "personaContexts": [
     {
-      "accountId": "xebia-work",
-      "personaName": "Xebia Work Account",
-      "domains": ["xebia.com"],
+      "accountId": "work-account",
+      "personaName": "Work Account",
+      "domains": ["example.com"],
       "emailCount": 65,
       "unreadCount": 12,
       "primaryTopics": ["Project Updates", "Meeting/Calendar", "Action Required"],
       "topSenderDomains": [
-        { "domain": "xebia.com", "emailCount": 45, "isInternalDomain": true },
+        { "domain": "example.com", "emailCount": 45, "isInternalDomain": true },
         { "domain": "client.com", "emailCount": 12, "isInternalDomain": false }
       ]
     },
     {
-      "accountId": "rocky-gmail",
+      "accountId": "personal-gmail",
       "personaName": "Personal Gmail",
       "domains": ["gmail.com"],
       "emailCount": 42,
@@ -181,10 +181,10 @@ Get full email content including body and attachments.
 ```json
 {
   "id": "msg-123",
-  "accountId": "xebia-work",
+  "accountId": "work-account",
   "subject": "Project Update",
-  "from": "colleague@xebia.com",
-  "to": ["me@xebia.com"],
+  "from": "colleague@example.com",
+  "to": ["me@example.com"],
   "cc": [],
   "body": "Full email body content...",
   "bodyFormat": "html",
@@ -216,7 +216,7 @@ Send email from specific account (requires explicit account selection or smart r
 {
   "success": true,
   "messageId": "sent-msg-456",
-  "accountUsed": "xebia-work"
+  "accountUsed": "work-account"
 }
 ```
 
@@ -234,9 +234,9 @@ List all calendars from specific account or all accounts.
   "calendars": [
     {
       "id": "cal-123",
-      "accountId": "xebia-work",
+      "accountId": "work-account",
       "name": "Calendar",
-      "owner": "me@xebia.com",
+      "owner": "me@example.com",
       "canEdit": true,
       "isDefault": true
     }
@@ -260,15 +260,15 @@ Get events (past/present/future) for specific account or all accounts.
   "events": [
     {
       "id": "evt-123",
-      "accountId": "xebia-work",
+      "accountId": "work-account",
       "calendarId": "cal-123",
       "subject": "Team Meeting",
       "start": "2025-12-05T14:00:00Z",
       "end": "2025-12-05T15:00:00Z",
       "location": "Conference Room A",
-      "attendees": ["colleague@xebia.com"],
+      "attendees": ["colleague@example.com"],
       "isAllDay": false,
-      "organizer": "me@xebia.com"
+      "organizer": "me@example.com"
     }
   ]
 }
@@ -316,7 +316,7 @@ Create calendar event in specific calendar (requires explicit account selection 
 {
   "success": true,
   "eventId": "evt-456",
-  "accountUsed": "xebia-work",
+  "accountUsed": "work-account",
   "calendarUsed": "cal-123"
 }
 ```
@@ -374,7 +374,7 @@ For read operations (get_emails, get_calendar_events, etc.), when `accountId` is
 User: "Show me my unread emails"
 → MCP tool: get_emails(unreadOnly=true)
 → Router: No accountId, execute on all accounts
-→ Parallel queries: [xebia-work, marimer-work, rocky-gmail]
+→ Parallel queries: [work-account, tenant2-account, personal-gmail]
 → Results merged: 45 unread emails across 3 accounts
 → Sorted by date descending
 → Return to AI assistant
@@ -410,8 +410,8 @@ Workflow:
 3. Group by account
 4. Generate summary:
    "You have 15 unread emails:
-   - Xebia Work: 8 emails (3 urgent)
-   - Marimer Work: 5 emails (1 from client)
+   - Work Account: 8 emails (3 urgent)
+   - Tenant2 Account: 5 emails (1 from client)
    - Personal Gmail: 2 emails (1 newsletter)"
 ```
 
@@ -423,16 +423,16 @@ Workflow:
 1. Call get_contextual_email_summary()
 2. Analyze returned topic clusters:
    "Your emails are organized into these main topics:
-   - Project Updates (23 emails across Xebia and Marimer, 5 unread)
+   - Project Updates (23 emails across Work and Tenant2, 5 unread)
    - Meeting Requests (18 emails, 3 unread)
    - Action Required (8 emails, all unread - needs attention!)
    
    ⚠️ Potential misrouted emails:
-   - Email from client@xebia.com received on Personal Gmail
-     → Should probably have gone to your Xebia Work account
+   - Email from client@example.com received on Personal Gmail
+     → Should probably have gone to your Work account
    
    📊 Persona breakdown:
-   - Xebia Work: Mostly project updates and client communications
+   - Work Account: Mostly project updates and client communications
    - Personal Gmail: Social and newsletters"
 ```
 
@@ -445,10 +445,10 @@ Workflow:
 2. Focus on matching clusters
 3. Present topic-focused view:
    "Found 31 project-related emails across 2 accounts:
-   - Xebia: 23 emails about current sprint and deployments
-   - Marimer: 8 emails about CSLA project updates
+   - Tenant1: 23 emails about current sprint and deployments
+   - Tenant2: 8 emails about project updates
    
-   Key senders: pm@xebia.com, dev@marimer.com
+   Key senders: pm@tenant1.com, dev@tenant2.com
    5 unread requiring attention"
 ```
 
@@ -466,14 +466,14 @@ Workflow:
 
 ### Example 5: Smart Email Sending
 ```
-AI Assistant receives: "Send email to sarah@xebia.com saying I'll be 10 minutes late"
+AI Assistant receives: "Send email to sarah@example.com saying I'll be 10 minutes late"
 
 Workflow:
-1. Call send_email(to="sarah@xebia.com", body="...")
-2. Router extracts domain "xebia.com"
-3. Router finds account with matching domain: "xebia-work"
-4. Send via xebia-work account
-5. Confirm: "Sent from your Xebia work account"
+1. Call send_email(to="sarah@example.com", body="...")
+2. Router extracts domain "example.com"
+3. Router finds account with matching domain: "work-account"
+4. Send via work-account
+5. Confirm: "Sent from your work account"
 ```
 
 ## Error Handling
@@ -487,7 +487,7 @@ All tools return consistent error responses:
     "code": "ACCOUNT_NOT_FOUND",
     "message": "Account 'invalid-account' not found",
     "details": {
-      "availableAccounts": ["xebia-work", "rocky-gmail"]
+      "availableAccounts": ["work-account", "personal-gmail"]
     }
   }
 }

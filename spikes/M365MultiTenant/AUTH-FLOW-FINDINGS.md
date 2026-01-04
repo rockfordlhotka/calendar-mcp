@@ -85,23 +85,23 @@ The server provides OAuth endpoints and handles the flow via HTTP redirects.
 
 ### Step 1: Authenticate Once Per Tenant
 
-**Marimer:**
+**Tenant1:**
 ```bash
-export MS365_MCP_CLIENT_ID="<your-marimer-client-id>"
-export MS365_MCP_TENANT_ID="<your-marimer-tenant-id>"
+export MS365_MCP_CLIENT_ID="<your-tenant1-client-id>"
+export MS365_MCP_TENANT_ID="<your-tenant1-tenant-id>"
 npx @softeria/ms-365-mcp-server --login
 ```
 
-Complete the device code flow with rocky@marimer.llc.
+Complete the device code flow with your Tenant1 account.
 
-**Xebia:**
+**Tenant2:**
 ```bash
-export MS365_MCP_CLIENT_ID="<your-xebia-client-id>"
-export MS365_MCP_TENANT_ID="<your-xebia-tenant-id>"
+export MS365_MCP_CLIENT_ID="<your-tenant2-client-id>"
+export MS365_MCP_TENANT_ID="<your-tenant2-tenant-id>"
 npx @softeria/ms-365-mcp-server --login
 ```
 
-Complete the device code flow with rocky.lhotka@xebia.com.
+Complete the device code flow with your Tenant2 account.
 
 ### Step 2: Test with Cached Tokens
 
@@ -117,14 +117,14 @@ npx @softeria/ms-365-mcp-server --org-mode --http 3001
 Both instances will use their cached tokens:
 
 ```bash
-# Terminal 1 - Marimer (uses cached token)
-export MS365_MCP_CLIENT_ID="<your-marimer-client-id>"
-export MS365_MCP_TENANT_ID="<your-marimer-tenant-id>"
+# Terminal 1 - Tenant1 (uses cached token)
+export MS365_MCP_CLIENT_ID="<your-tenant1-client-id>"
+export MS365_MCP_TENANT_ID="<your-tenant1-tenant-id>"
 npx @softeria/ms-365-mcp-server --org-mode --http 3001
 
-# Terminal 2 - Xebia (uses cached token)
-export MS365_MCP_CLIENT_ID="<your-xebia-client-id>"
-export MS365_MCP_TENANT_ID="<your-xebia-tenant-id>"
+# Terminal 2 - Tenant2 (uses cached token)
+export MS365_MCP_CLIENT_ID="<your-tenant2-client-id>"
+export MS365_MCP_TENANT_ID="<your-tenant2-tenant-id>"
 npx @softeria/ms-365-mcp-server --org-mode --http 3002
 ```
 

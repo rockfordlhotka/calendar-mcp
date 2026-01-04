@@ -37,15 +37,15 @@ Edit `appsettings.Development.json`:
 {
   "Tenants": {
     "Tenant1": {
-      "Name": "Xebia Work",
-      "TenantId": "paste-xebia-tenant-id-here",
-      "ClientId": "paste-xebia-client-id-here",
+      "Name": "Tenant1 Work",
+      "TenantId": "paste-tenant1-tenant-id-here",
+      "ClientId": "paste-tenant1-client-id-here",
       "Enabled": true
     },
     "Tenant2": {
-      "Name": "Marimer M365",
-      "TenantId": "paste-marimer-tenant-id-here",
-      "ClientId": "paste-marimer-client-id-here",
+      "Name": "Tenant2 M365",
+      "TenantId": "paste-tenant2-tenant-id-here",
+      "ClientId": "paste-tenant2-client-id-here",
       "Enabled": true
     }
   }

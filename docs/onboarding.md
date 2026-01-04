@@ -110,10 +110,10 @@ calendar-mcp-setup add-account
 
 # Interactive prompts:
 # 1. Account type? (microsoft365 / google / outlook.com)
-# 2. Account ID (unique identifier, e.g., "xebia-work")
-# 3. Display name (e.g., "Xebia Work Account")
+# 2. Account ID (unique identifier, e.g., "work-account")
+# 3. Display name (e.g., "Work Account")
 # 4. Priority (default: 999)
-# 5. Email domains for routing (e.g., "xebia.com,lhotka.net")
+# 5. Email domains for routing (e.g., "company.com,example.net")
 # 
 # For Microsoft 365:
 #   6. Tenant ID
@@ -144,19 +144,19 @@ calendar-mcp-setup list-accounts
 # Configured accounts:
 # 
 # ID              Display Name           Provider       Enabled  Domains
-# xebia-work      Xebia Work Account     microsoft365   Yes      xebia.com
-# marimer-work    Marimer Consulting     microsoft365   Yes      marimer.com, lhotka.net
-# rocky-gmail     Personal Gmail         google         Yes      gmail.com
-# rocky-outlook   Personal Outlook       outlook.com    Yes      outlook.com, hotmail.com
+# work-account    Work Account           microsoft365   Yes      company.com
+# consulting-work Consulting Work        microsoft365   Yes      consulting.com, example.net
+# personal-gmail  Personal Gmail         google         Yes      gmail.com
+# personal-outlook Personal Outlook      outlook.com    Yes      outlook.com, hotmail.com
 ```
 
 #### Test Account
 
 ```bash
-calendar-mcp-setup test-account xebia-work
+calendar-mcp-setup test-account work-account
 
 # Output:
-# Testing account: xebia-work
+# Testing account: work-account
 # ✓ Configuration valid
 # ✓ Token cache found
 # ✓ Token valid (expires in 45 minutes)
@@ -168,10 +168,10 @@ calendar-mcp-setup test-account xebia-work
 #### Refresh Account
 
 ```bash
-calendar-mcp-setup refresh-account xebia-work
+calendar-mcp-setup refresh-account work-account
 
 # Output:
-# Refreshing account: xebia-work
+# Refreshing account: work-account
 # → Opening browser for re-authentication...
 # ✓ Authentication successful
 # ✓ Token saved
@@ -182,10 +182,10 @@ calendar-mcp-setup refresh-account xebia-work
 #### Remove Account
 
 ```bash
-calendar-mcp-setup remove-account xebia-work
+calendar-mcp-setup remove-account work-account
 
 # Confirmation prompt:
-# Are you sure you want to remove account 'xebia-work'? (y/N): y
+# Are you sure you want to remove account 'work-account'? (y/N): y
 # 
 # ✓ Token cache deleted
 # ✓ Configuration removed
@@ -228,12 +228,12 @@ Stored in `appsettings.json`:
 {
   "accounts": [
     {
-      "id": "xebia-work",
-      "displayName": "Xebia Work Account",
+      "id": "work-account",
+      "displayName": "Work Account",
       "provider": "microsoft365",
       "enabled": true,
       "priority": 1,
-      "domains": ["xebia.com"],
+      "domains": ["company.com"],
       "configuration": {
         "tenantId": "12345678-1234-1234-1234-123456789abc",
         "clientId": "87654321-4321-4321-4321-cba987654321",
@@ -269,15 +269,15 @@ See [Authentication](authentication.md#per-account-token-storage) for details.
 ```
 [INFO] Loading account registry...
 [INFO] Found 4 configured accounts
-[INFO] Initializing account: xebia-work (microsoft365)
+[INFO] Initializing account: work-account (microsoft365)
 [INFO]   ✓ Token cache found, valid until 2025-12-04 15:30:00
-[INFO] Initializing account: marimer-work (microsoft365)
+[INFO] Initializing account: consulting-work (microsoft365)
 [WARN]   ⚠ Token expired, attempting refresh...
 [INFO]   ✓ Token refreshed successfully
-[INFO] Initializing account: rocky-gmail (google)
+[INFO] Initializing account: personal-gmail (google)
 [ERROR]  ✗ Token refresh failed: Invalid grant
-[ERROR]  → Run 'calendar-mcp-setup refresh-account rocky-gmail' to re-authenticate
-[INFO] Initializing account: rocky-outlook (outlook.com)
+[ERROR]  → Run 'calendar-mcp-setup refresh-account personal-gmail' to re-authenticate
+[INFO] Initializing account: personal-outlook (outlook.com)
 [INFO]   ✓ Token cache found, valid until 2025-12-04 16:00:00
 [INFO] MCP Server ready with 3 active accounts (1 failed)
 ```

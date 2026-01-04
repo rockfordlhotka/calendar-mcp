@@ -57,11 +57,11 @@ calendar-mcp-cli add-m365-account
 ```
 
 **Interactive Prompts:**
-1. Account ID (e.g., "xebia-work")
-2. Display Name (e.g., "Xebia Work Account")
+1. Account ID (e.g., "work-account")
+2. Display Name (e.g., "Work Account")
 3. Tenant ID (Azure AD tenant ID)
 4. Client ID (App registration client ID)
-5. Email Domains (comma-separated, e.g., "xebia.com,example.com")
+5. Email Domains (comma-separated, e.g., "company.com,example.com")
 6. Priority (higher = preferred, default: 0)
 
 ### add-outlook-account
@@ -91,7 +91,7 @@ calendar-mcp-cli add-outlook-account
 
 ### add-google-account
 
-Add a new Google account (Gmail, Google Workspace, or custom domain like lhotka.net).
+Add a new Google account (Gmail, Google Workspace, or custom domain).
 
 **Usage:**
 ```bash
@@ -107,11 +107,11 @@ calendar-mcp-cli add-google-account
 ```
 
 **Interactive Prompts:**
-1. Account ID (e.g., "rocky-gmail" or "lhotka-workspace")
-2. Display Name (e.g., "Personal Gmail" or "Lhotka.net Workspace")
+1. Account ID (e.g., "personal-gmail" or "work-workspace")
+2. Display Name (e.g., "Personal Gmail" or "Work Workspace")
 3. Client ID (from Google Cloud Console)
 4. Client Secret (from Google Cloud Console)
-5. Email Domains (e.g., "gmail.com" or "lhotka.net")
+5. Email Domains (e.g., "gmail.com" or "company.com")
 6. Priority (higher = preferred, default: 0)
 
 ### list-accounts
@@ -148,8 +148,8 @@ calendar-mcp-cli test-account <account-id> [--config <path>]
 
 **Example:**
 ```bash
-calendar-mcp-cli test-account xebia-work
-calendar-mcp-cli test-account rocky-gmail
+calendar-mcp-cli test-account work-account
+calendar-mcp-cli test-account personal-gmail
 ```
 
 This command attempts to retrieve a cached token silently. If successful, the account is authenticated and ready to use.
@@ -196,12 +196,12 @@ The CLI updates the `appsettings.json` file with this structure:
   "CalendarMcp": {
     "Accounts": [
       {
-        "id": "xebia-work",
-        "displayName": "Xebia Work Account",
+        "id": "work-account",
+        "displayName": "Work Account",
         "provider": "microsoft365",
         "enabled": true,
         "priority": 1,
-        "domains": ["xebia.com"],
+        "domains": ["company.com"],
         "providerConfig": {
           "tenantId": "12345678-1234-1234-1234-123456789abc",
           "clientId": "87654321-4321-4321-4321-cba987654321"
@@ -220,7 +220,7 @@ The CLI updates the `appsettings.json` file with this structure:
         }
       },
       {
-        "id": "rocky-gmail",
+        "id": "personal-gmail",
         "displayName": "Personal Gmail",
         "provider": "google",
         "enabled": true,

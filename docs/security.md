@@ -219,7 +219,7 @@ export CALENDAR_MCP_Google_ClientSecret="GOCSPX-..."
 - Email sender/recipient names (keeps domains)
 
 **Redacted when `redactPii: true`**:
-- Full email addresses (keeps domain: `***@xebia.com`)
+- Full email addresses (keeps domain: `***@example.com`)
 - Display names
 - Phone numbers
 - Physical addresses
@@ -227,7 +227,7 @@ export CALENDAR_MCP_Google_ClientSecret="GOCSPX-..."
 **Never Redacted** (safe metadata):
 - Account IDs
 - Provider types
-- Domains (e.g., "xebia.com")
+- Domains (e.g., "example.com")
 - Message counts
 - Timestamps
 - Status codes
@@ -238,12 +238,12 @@ export CALENDAR_MCP_Google_ClientSecret="GOCSPX-..."
 ```csharp
 // Before redaction
 "email.subject": "Q4 Budget Proposal from John Smith"
-"email.from": "john.smith@xebia.com"
+"email.from": "john.smith@example.com"
 "email.body": "Here are the Q4 budget numbers..."
 
 // After redaction
 "email.subject": "[REDACTED]"
-"email.from": "***@xebia.com"
+"email.from": "***@example.com"
 "email.body": "[REDACTED]"
 ```
 
@@ -362,8 +362,8 @@ public void ValidateSearchQuery(string query)
 **No cross-account access possible**:
 ```csharp
 // This is enforced:
-var emails = await _m365Provider.GetEmailsAsync("xebia-work", ...);
-// Cannot accidentally use marimer-work's token for xebia-work's data
+var emails = await _m365Provider.GetEmailsAsync("work-account", ...);
+// Cannot accidentally use personal-account's token for work-account's data
 ```
 
 ### Principle of Least Privilege

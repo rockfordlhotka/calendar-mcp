@@ -81,12 +81,12 @@ Accounts are added to `appsettings.json` in this format:
 {
   "accounts": [
     {
-      "id": "xebia-work",
-      "displayName": "Xebia Work Account",
+      "id": "work-account",
+      "displayName": "Work Account",
       "provider": "microsoft365",
       "enabled": true,
       "priority": 1,
-      "domains": ["xebia.com"],
+      "domains": ["example.com"],
       "providerConfig": {
         "tenantId": "12345678-1234-1234-1234-123456789abc",
         "clientId": "87654321-4321-4321-4321-cba987654321"

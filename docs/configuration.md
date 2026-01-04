@@ -55,31 +55,31 @@ set CALENDAR_MCP_CONFIG=C:\MyConfig\my-calendar-config.json
   "CalendarMcp": {
     "Accounts": [
       {
-        "Id": "xebia-work",
-        "DisplayName": "Xebia Work Account",
+        "Id": "work-account",
+        "DisplayName": "Work Account",
         "Provider": "microsoft365",
         "Enabled": true,
         "Priority": 1,
-        "Domains": ["xebia.com"],
+        "Domains": ["company.com"],
         "ProviderConfig": {
           "TenantId": "12345678-1234-1234-1234-123456789abc",
           "ClientId": "87654321-4321-4321-4321-cba987654321"
         }
       },
       {
-        "Id": "marimer-work",
-        "DisplayName": "Marimer Consulting",
+        "Id": "consulting-work",
+        "DisplayName": "Consulting Work",
         "Provider": "microsoft365",
         "Enabled": true,
         "Priority": 2,
-        "Domains": ["marimer.com", "lhotka.net"],
+        "Domains": ["consulting.com", "example.net"],
         "ProviderConfig": {
           "TenantId": "87654321-4321-4321-4321-123456789xyz",
           "ClientId": "87654321-4321-4321-4321-cba987654321"
         }
       },
       {
-        "Id": "rocky-gmail",
+        "Id": "personal-gmail",
         "DisplayName": "Personal Gmail",
         "Provider": "google",
         "Enabled": true,
@@ -88,11 +88,11 @@ set CALENDAR_MCP_CONFIG=C:\MyConfig\my-calendar-config.json
         "ProviderConfig": {
           "ClientId": "123456789-abcdefg.apps.googleusercontent.com",
           "ClientSecret": "GOCSPX-...",
-          "UserEmail": "rocky@gmail.com"
+          "UserEmail": "user@gmail.com"
         }
       },
       {
-        "Id": "rocky-outlook",
+        "Id": "personal-outlook",
         "DisplayName": "Personal Outlook",
         "Provider": "outlook.com",
         "Enabled": true,
@@ -111,7 +111,7 @@ set CALENDAR_MCP_CONFIG=C:\MyConfig\my-calendar-config.json
       "MaxTokens": 500,
       "TimeoutSeconds": 10,
       "FallbackToDefault": true,
-      "DefaultAccountId": "xebia-work"
+      "DefaultAccountId": "work-account"
     },
     "Telemetry": {
       "Enabled": true,
@@ -251,7 +251,7 @@ set CALENDAR_MCP_CONFIG=C:\MyConfig\my-calendar-config.json
     "maxTokens": 500,
     "timeoutSeconds": 10,
     "fallbackToDefault": true,
-    "defaultAccountId": "xebia-work"
+    "defaultAccountId": "work-account"
   }
 }
 ```

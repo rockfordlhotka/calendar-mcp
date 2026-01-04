@@ -4,13 +4,13 @@
       "TenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "ClientId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "ClientSecret": "your-client-secret-here",
-      "DisplayName": "Xebia Work"
+      "DisplayName": "Tenant1 Work"
     },
     "Tenant2": {
       "TenantId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
       "ClientId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
       "ClientSecret": "your-client-secret-here",
-      "DisplayName": "Marimer M365"
+      "DisplayName": "Tenant2 M365"
     }
   },
   "McpServer": {

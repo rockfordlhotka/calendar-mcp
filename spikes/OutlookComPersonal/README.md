@@ -25,7 +25,7 @@ The M365MultiTenant spike successfully established connection patterns for organ
 
 ### Azure App Registration
 - **App Name:** Calendar-MCP-Personal
-- **Tenant:** Marimer Entra ID
+- **Tenant:** Your Entra ID tenant
 - **Sign-in Audience:** Personal and organizational Microsoft accounts
 - **Access Token Version:** 2 (required for personal accounts)
 - **Client ID:** Configured in `appsettings.Development.json` (not committed to repo)

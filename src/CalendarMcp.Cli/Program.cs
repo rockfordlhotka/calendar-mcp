@@ -50,8 +50,8 @@ app.Configure(config =>
 
     config.AddCommand<TestAccountCommand>("test-account")
         .WithDescription("Test account authentication")
-        .WithExample(new[] { "test-account", "xebia-work" })
-        .WithExample(new[] { "test-account", "xebia-work", "--config", "/path/to/appsettings.json" });
+        .WithExample(new[] { "test-account", "work-account" })
+        .WithExample(new[] { "test-account", "work-account", "--config", "/path/to/appsettings.json" });
 });
 
 try

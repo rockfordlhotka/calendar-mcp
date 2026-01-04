@@ -90,21 +90,21 @@ This opens a web interface where you can:
 
 ## Step 4: Test Multi-Tenant (Two Terminals)
 
-### Terminal 1 - Xebia Tenant:
+### Terminal 1 - Tenant1:
 ```bash
-# Set credentials for Xebia
-export MS365_MCP_CLIENT_ID="xebia-client-id"
-export MS365_MCP_TENANT_ID="xebia-tenant-id"  # or "common"
+# Set credentials for Tenant1
+export MS365_MCP_CLIENT_ID="tenant1-client-id"
+export MS365_MCP_TENANT_ID="tenant1-tenant-id"  # or "common"
 
 # Start server on port 3001
 npx @softeria/ms-365-mcp-server --org-mode --http 3001
 ```
 
-### Terminal 2 - Marimer Tenant:
+### Terminal 2 - Tenant2:
 ```bash
-# Set credentials for Marimer
-export MS365_MCP_CLIENT_ID="marimer-client-id"
-export MS365_MCP_TENANT_ID="marimer-tenant-id"  # or "common"
+# Set credentials for Tenant2
+export MS365_MCP_CLIENT_ID="tenant2-client-id"
+export MS365_MCP_TENANT_ID="tenant2-tenant-id"  # or "common"
 
 # Start server on port 3002
 npx @softeria/ms-365-mcp-server --org-mode --http 3002
@@ -112,10 +112,10 @@ npx @softeria/ms-365-mcp-server --org-mode --http 3002
 
 ### Terminal 3 - Test Both:
 ```bash
-# Test Xebia instance
+# Test Tenant1 instance
 curl http://localhost:3001/mcp
 
-# Test Marimer instance
+# Test Tenant2 instance
 curl http://localhost:3002/mcp
 ```
 
@@ -126,20 +126,20 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ```json
 {
   "mcpServers": {
-    "ms365-xebia": {
+    "ms365-tenant1": {
       "command": "npx",
       "args": ["-y", "@softeria/ms-365-mcp-server", "--org-mode"],
       "env": {
-        "MS365_MCP_CLIENT_ID": "xebia-client-id",
-        "MS365_MCP_TENANT_ID": "xebia-tenant-id"
+        "MS365_MCP_CLIENT_ID": "tenant1-client-id",
+        "MS365_MCP_TENANT_ID": "tenant1-tenant-id"
       }
     },
-    "ms365-marimer": {
+    "ms365-tenant2": {
       "command": "npx",
       "args": ["-y", "@softeria/ms-365-mcp-server", "--org-mode"],
       "env": {
-        "MS365_MCP_CLIENT_ID": "marimer-client-id",
-        "MS365_MCP_TENANT_ID": "marimer-tenant-id"
+        "MS365_MCP_CLIENT_ID": "tenant2-client-id",
+        "MS365_MCP_TENANT_ID": "tenant2-tenant-id"
       }
     }
   }
@@ -147,8 +147,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ```
 
 Restart Claude Desktop and try:
-- "List my calendars from Xebia"
-- "List my calendars from Marimer"
+- "List my calendars from Tenant1"
+- "List my calendars from Tenant2"
 - "Show me all my emails from both accounts"
 
 ## Step 6: Authentication Flow

@@ -256,19 +256,19 @@ public class GetUnreadEmailsTool : McpTool
 {
   "accounts": [
     {
-      "id": "rocky-lhotka",
+      "id": "user-personal",
       "type": "google",
-      "userEmail": "rocky@lhotka.net",
-      "displayName": "Rocky Personal Gmail",
-      "domains": ["lhotka.net"],
+      "userEmail": "user@example.net",
+      "displayName": "Personal Gmail",
+      "domains": ["example.net"],
       "priority": 1
     },
     {
-      "id": "rocky-marimer",
+      "id": "user-work",
       "type": "google",
-      "userEmail": "rocky@marimer.com",
-      "displayName": "Rocky Marimer GSuite",
-      "domains": ["marimer.com"],
+      "userEmail": "user@company.com",
+      "displayName": "Work GSuite",
+      "domains": ["company.com"],
       "priority": 2
     }
   ]
@@ -659,18 +659,18 @@ Calendar-MCP Server
 {
   "accounts": [
     {
-      "id": "xebia-work",
+      "id": "tenant1-work",
       "type": "microsoft365",
       "tenantId": "...",
       // ... M365 config
     },
     {
-      "id": "rocky-gmail",
+      "id": "user-gmail",
       "type": "google",
-      "userEmail": "rocky@lhotka.net",
+      "userEmail": "user@example.net",
       "googleClientId": "...",
       "googleClientSecret": "...",
-      "domains": ["lhotka.net"],
+      "domains": ["example.net"],
       "priority": 3
     }
   ]

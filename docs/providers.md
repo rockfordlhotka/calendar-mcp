@@ -28,13 +28,13 @@ Direct Microsoft Graph API integration for organizational accounts.
   - One ClientId used across multiple tenants
   - Requires admin consent in each tenant
   - Simpler setup, fewer app registrations
-  - **Example**: ClientId `aaa...` for Xebia, Marimer, etc.
+  - **Example**: ClientId `aaa...` for Tenant1, Tenant2, etc.
 
 **Option B (Per-Tenant)**: Separate app registration per tenant
   - Required when tenant IT policies block external apps
   - Each tenant admin creates their own app registration
   - More control, tenant-specific permissions
-  - **Example**: Xebia ClientId `aaa...`, Marimer ClientId `bbb...`
+  - **Example**: Tenant1 ClientId `aaa...`, Tenant2 ClientId `bbb...`
 
 ### Authentication
 
@@ -98,7 +98,7 @@ Direct Google Workspace API integration for Gmail and Calendar.
   - Required when Workspace admin restricts external OAuth apps
   - Each organization creates their own Google Cloud project
   - More control, org-specific approval
-  - **Example**: Personal ClientId `123...`, Marimer ClientId `456...`
+  - **Example**: Personal ClientId `123...`, Tenant2 ClientId `456...`
 
 ### Authentication
 

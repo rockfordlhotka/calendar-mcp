@@ -60,12 +60,12 @@ public class AddM365AccountCommand : AsyncCommand<AddM365AccountCommand.Settings
 
         // Prompt for account details
         var accountId = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Account ID[/] (e.g., 'xebia-work'):")
+            new TextPrompt<string>("[green]Account ID[/] (e.g., 'work-account'):")
                 .ValidationErrorMessage("[red]Account ID is required[/]")
                 .Validate(id => !string.IsNullOrWhiteSpace(id)));
 
         var displayName = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Display Name[/] (e.g., 'Xebia Work Account'):")
+            new TextPrompt<string>("[green]Display Name[/] (e.g., 'Work Account'):")
                 .ValidationErrorMessage("[red]Display name is required[/]")
                 .Validate(name => !string.IsNullOrWhiteSpace(name)));
 
@@ -80,7 +80,7 @@ public class AddM365AccountCommand : AsyncCommand<AddM365AccountCommand.Settings
                 .Validate(cid => !string.IsNullOrWhiteSpace(cid)));
 
         var domains = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Email Domains[/] (comma-separated, e.g., 'xebia.com,example.com'):")
+            new TextPrompt<string>("[green]Email Domains[/] (comma-separated, e.g., 'company.com,example.com'):")
                 .AllowEmpty());
 
         var priority = AnsiConsole.Prompt(

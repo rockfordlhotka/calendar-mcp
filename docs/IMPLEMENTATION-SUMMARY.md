@@ -74,8 +74,8 @@ COMMANDS:
 Each account has its own token cache file:
 ```
 %LOCALAPPDATA%/CalendarMcp/
-  ├── msal_cache_xebia-work.bin
-  ├── msal_cache_marimer-work.bin
+  ├── msal_cache_work-account.bin
+  ├── msal_cache_tenant2-account.bin
   └── msal_cache_personal-outlook.bin
 ```
 
@@ -122,11 +122,11 @@ dotnet run --project src/CalendarMcp.Cli/CalendarMcp.Cli.csproj -- \
 ```
 
 Interactive prompts:
-- Account ID: `xebia-work`
-- Display Name: `Xebia Work Account`
+- Account ID: `work-account`
+- Display Name: `Work Account`
 - Tenant ID: `12345678-...`
 - Client ID: `87654321-...`
-- Domains: `xebia.com`
+- Domains: `example.com`
 - Priority: `1`
 
 ### 3. Verify Authentication
@@ -153,12 +153,12 @@ Accounts are stored in `appsettings.json`:
 {
   "accounts": [
     {
-      "id": "xebia-work",
-      "displayName": "Xebia Work Account",
+      "id": "work-account",
+      "displayName": "Work Account",
       "provider": "microsoft365",
       "enabled": true,
       "priority": 1,
-      "domains": ["xebia.com"],
+      "domains": ["example.com"],
       "providerConfig": {
         "tenantId": "12345678-1234-1234-1234-123456789abc",
         "clientId": "87654321-4321-4321-4321-cba987654321"

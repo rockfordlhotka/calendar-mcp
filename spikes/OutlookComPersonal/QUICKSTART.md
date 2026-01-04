@@ -4,7 +4,7 @@
 
 - .NET 9 SDK
 - Personal Microsoft account (@outlook.com, @hotmail.com, or @live.com)
-- **Pre-configured Azure app registration**: `Calendar-MCP-Personal` (already set up in Marimer Entra ID)
+- **Pre-configured Azure app registration**: `Calendar-MCP-Personal` (already set up in your Entra ID tenant)
 
 ## Existing App Registration
 

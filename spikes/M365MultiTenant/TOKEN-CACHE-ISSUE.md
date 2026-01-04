@@ -5,18 +5,18 @@
 When using the **same client ID** for multiple tenants, Softeria's ms-365-mcp-server has a token caching conflict:
 
 ### Symptom:
-After authenticating to Marimer tenant successfully, attempting to authenticate to Xebia tenant fails with:
+After authenticating to Tenant1 successfully, attempting to authenticate to Tenant2 fails with:
 
 ```
-Selected user account does not exist in tenant 'Marimer LLC' and cannot access 
-the application '<marimer-client-id>' in that tenant.
+Selected user account does not exist in tenant 'Tenant1 Org' and cannot access 
+the application '<tenant1-client-id>' in that tenant.
 ```
 
 ### Root Cause:
-The token cache keys on **client ID only**, not **client ID + tenant ID**. When you try to authenticate to Xebia:
+The token cache keys on **client ID only**, not **client ID + tenant ID**. When you try to authenticate to Tenant2:
 1. Server looks for cached token by client ID
-2. Finds Marimer token (same client ID)
-3. Tries to use Marimer token for Xebia tenant
+2. Finds Tenant1 token (same client ID)
+3. Tries to use Tenant1 token for Tenant2 tenant
 4. Fails with tenant mismatch error
 
 ## Workarounds
@@ -25,10 +25,10 @@ The token cache keys on **client ID only**, not **client ID + tenant ID**. When 
 
 Create a separate app registration for each tenant scenario:
 
-#### Create Xebia-Specific App:
+#### Create Tenant2-Specific App:
 ```bash
 az ad app create \
-  --display-name "Calendar-MCP-Xebia" \
+  --display-name "Calendar-MCP-Tenant2" \
   --sign-in-audience "AzureADMultipleOrgs" \
   --is-fallback-public-client true \
   --public-client-redirect-uris "http://localhost"
@@ -36,9 +36,9 @@ az ad app create \
 
 Get the app ID and add permissions:
 ```bash
-XEBIA_APP_ID="<new-app-id>"
+TENANT2_APP_ID="<new-app-id>"
 
-az ad app permission add --id $XEBIA_APP_ID \
+az ad app permission add --id $TENANT2_APP_ID \
   --api 00000003-0000-0000-c000-000000000000 \
   --api-permissions \
     e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
@@ -47,7 +47,7 @@ az ad app permission add --id $XEBIA_APP_ID \
     1ec239c2-d7c9-4623-a91a-a9775856bb36=Scope \
     465a38f9-76ea-45b9-9f34-9e8b0d4b0b42=Scope
 
-az ad app permission admin-consent --id $XEBIA_APP_ID
+az ad app permission admin-consent --id $TENANT2_APP_ID
 ```
 
 #### Update Configuration:
@@ -55,14 +55,14 @@ az ad app permission admin-consent --id $XEBIA_APP_ID
 {
   "Accounts": {
     "Tenant1": {
-      "TenantId": "<xebia-tenant-id>",
-      "ClientId": "<xebia-app-id>",
-      "DisplayName": "Xebia Work"
+      "TenantId": "<tenant2-tenant-id>",
+      "ClientId": "<tenant2-app-id>",
+      "DisplayName": "Tenant2 Work"
     },
     "Tenant2": {
-      "TenantId": "<marimer-tenant-id>",
-      "ClientId": "<marimer-app-id>",
-      "DisplayName": "Marimer LLC"
+      "TenantId": "<tenant1-tenant-id>",
+      "ClientId": "<tenant1-app-id>",
+      "DisplayName": "Tenant1 Account"
     }
   }
 }
@@ -83,16 +83,16 @@ az ad app permission admin-consent --id $XEBIA_APP_ID
 For testing/spike purposes, manually clear cache:
 
 ```bash
-# Authenticate to Marimer
+# Authenticate to Tenant1
 export MS365_MCP_CLIENT_ID="<your-client-id>"
-export MS365_MCP_TENANT_ID="<marimer-tenant-id>"
+export MS365_MCP_TENANT_ID="<tenant1-tenant-id>"
 npx @softeria/ms-365-mcp-server --login
 
 # Clear cache before switching tenants
 rm ~/.ms-365-mcp-tokens.json
 
-# Authenticate to Xebia
-export MS365_MCP_TENANT_ID="<xebia-tenant-id>"
+# Authenticate to Tenant2
+export MS365_MCP_TENANT_ID="<tenant2-tenant-id>"
 npx @softeria/ms-365-mcp-server --login
 ```
 
@@ -110,14 +110,14 @@ npx @softeria/ms-365-mcp-server --login
 Set a custom token cache location per tenant:
 
 ```bash
-# Marimer
-export MS365_MCP_TOKEN_CACHE="$HOME/.ms365-tokens-marimer.json"
-export MS365_MCP_TENANT_ID="<marimer-tenant-id>"
+# Tenant1
+export MS365_MCP_TOKEN_CACHE="$HOME/.ms365-tokens-tenant1.json"
+export MS365_MCP_TENANT_ID="<tenant1-tenant-id>"
 npx @softeria/ms-365-mcp-server --login
 
-# Xebia  
-export MS365_MCP_TOKEN_CACHE="$HOME/.ms365-tokens-xebia.json"
-export MS365_MCP_TENANT_ID="<xebia-tenant-id>"
+# Tenant2  
+export MS365_MCP_TOKEN_CACHE="$HOME/.ms365-tokens-tenant2.json"
+export MS365_MCP_TENANT_ID="<tenant2-tenant-id>"
 npx @softeria/ms-365-mcp-server --login
 ```
 
@@ -128,21 +128,21 @@ npx @softeria/ms-365-mcp-server --login
 Manage tokens externally and pass them in:
 
 ```bash
-# Get Marimer token
-MARIMER_TOKEN=$(az account get-access-token \
-  --tenant <marimer-tenant-id> \
+# Get Tenant1 token
+TENANT1_TOKEN=$(az account get-access-token \
+  --tenant <tenant1-tenant-id> \
   --resource https://graph.microsoft.com \
   --query accessToken -o tsv)
 
-# Get Xebia token
-XEBIA_TOKEN=$(az account get-access-token \
-  --tenant <xebia-tenant-id> \
+# Get Tenant2 token
+TENANT2_TOKEN=$(az account get-access-token \
+  --tenant <tenant2-tenant-id> \
   --resource https://graph.microsoft.com \
   --query accessToken -o tsv)
 
 # Use tokens
-MS365_MCP_OAUTH_TOKEN=$MARIMER_TOKEN npx @softeria/ms-365-mcp-server --org-mode --http 3001
-MS365_MCP_OAUTH_TOKEN=$XEBIA_TOKEN npx @softeria/ms-365-mcp-server --org-mode --http 3002
+MS365_MCP_OAUTH_TOKEN=$TENANT1_TOKEN npx @softeria/ms-365-mcp-server --org-mode --http 3001
+MS365_MCP_OAUTH_TOKEN=$TENANT2_TOKEN npx @softeria/ms-365-mcp-server --org-mode --http 3002
 ```
 
 **Pros:**
@@ -163,13 +163,13 @@ MS365_MCP_OAUTH_TOKEN=$XEBIA_TOKEN npx @softeria/ms-365-mcp-server --org-mode --
 ```
 Calendar-MCP (Orchestration Layer)
 ├── Account Registry
-│   ├── Xebia Account
-│   │   ├── Client ID: <xebia-app-id>
-│   │   ├── Tenant ID: <xebia-tenant-id>
+│   ├── Tenant2 Account
+│   │   ├── Client ID: <tenant2-app-id>
+│   │   ├── Tenant ID: <tenant2-tenant-id>
 │   │   └── MCP Server Instance (Port 3001)
-│   └── Marimer Account  
-│       ├── Client ID: <marimer-app-id>
-│       ├── Tenant ID: <marimer-tenant-id>
+│   └── Tenant1 Account  
+│       ├── Client ID: <tenant1-app-id>
+│       ├── Tenant ID: <tenant1-tenant-id>
 │       └── MCP Server Instance (Port 3002)
 ```
 
@@ -189,8 +189,8 @@ Calendar-MCP (Orchestration Layer)
 
 For the spike, let's create separate app IDs:
 
-1. **Marimer app** (already exists): `<marimer-app-id>`
-2. **Xebia app** (create new): Use Azure CLI to create
+1. **Tenant1 app** (already exists): `<tenant1-app-id>`
+2. **Tenant2 app** (create new): Use Azure CLI to create
 
 This proves:
 ✅ Multi-tenant authentication works
@@ -200,7 +200,7 @@ This proves:
 
 ## Next Steps
 
-1. Create Xebia-specific app registration
+1. Create Tenant2-specific app registration
 2. Authenticate both tenants with their respective client IDs
 3. Run both MCP servers simultaneously (different ports)
 4. Test querying both from C# orchestration layer
@@ -214,17 +214,17 @@ This proves:
 
 **Real-World Evidence from Testing:**
 
-1. **First collision (Marimer + Personal Outlook):**
-   - Used client ID `<marimer-client-id>` for both tenants
-   - Authenticated Marimer tenant successfully
+1. **First collision (Tenant1 + Personal Outlook):**
+   - Used client ID `<tenant1-client-id>` for both tenants
+   - Authenticated Tenant1 tenant successfully
    - Attempted to authenticate Personal Outlook tenant
-   - **Result:** Required logout/re-authentication, invalidated Marimer session
+   - **Result:** Required logout/re-authentication, invalidated Tenant1 session
    - Cannot maintain simultaneous sessions with shared client ID
 
 2. **Workaround validation:**
    - Created three separate app registrations:
-     - `Calendar-MCP-Xebia` (<xebia-client-id>)
-     - `Calendar-MCP-Marimer` (<marimer-client-id>)
+     - `Calendar-MCP-Tenant2` (<tenant2-client-id>)
+     - `Calendar-MCP-Tenant1` (<tenant1-client-id>)
      - `Calendar-MCP-Personal` (<personal-client-id>)
    - Each tenant configured with unique client ID
    - **Result:** Token isolation confirmed, no authentication conflicts

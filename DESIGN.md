@@ -145,10 +145,10 @@ graph TD
 {
   "accounts": [
     {
-      "id": "xebia-work",
-      "displayName": "Xebia Work Account",
+      "id": "work-account",
+      "displayName": "Work Account",
       "provider": "microsoft365",
-      "domains": ["xebia.com"],
+      "domains": ["company.com"],
       "configuration": {
         "tenantId": "...",
         "clientId": "...",

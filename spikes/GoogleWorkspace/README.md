@@ -57,7 +57,7 @@ Edit `appsettings.Development.json` with your credentials:
   "Google": {
     "ClientId": "your-client-id.apps.googleusercontent.com",
     "ClientSecret": "your-client-secret",
-    "UserEmail": "rocky@lhotka.net",
+    "UserEmail": "user@example.net",
     "Scopes": [
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.send",
@@ -81,7 +81,7 @@ dotnet run
 
 On first run:
 1. A browser window will open
-2. Sign in with your Google account (rocky@lhotka.net)
+2. Sign in with your Google account (your configured email)
 3. Review and approve the requested permissions
 4. Browser will show "Authentication successful" message
 5. Return to the terminal - the app will continue
@@ -122,7 +122,7 @@ Subsequent runs will use the cached token (no browser needed).
 Testing Gmail and Google Calendar integration
 
 Initializing Google OAuth authentication...
-User: rocky@lhotka.net
+User: user@example.net
 Scopes: https://www.googleapis.com/auth/gmail.readonly, ...
 Token cache path: C:\Users\...\\.credentials\google-workspace-spike
 ✓ Google authentication successful
@@ -154,7 +154,7 @@ Fetching calendar list...
 Found 2 calendars
 
 Your Calendars:
-  • rocky@lhotka.net (ID: primary)
+  • user@example.net (ID: primary)
   • Work Calendar (ID: xxx@group.calendar.google.com)
 
 === Upcoming Events (Next 7 days) ===

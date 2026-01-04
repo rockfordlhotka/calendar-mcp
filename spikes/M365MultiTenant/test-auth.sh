@@ -7,70 +7,70 @@ echo "Testing Multi-Tenant M365 Authentication"
 echo "=========================================="
 echo ""
 
-CLIENT_ID="<your-marimer-client-id>"
+CLIENT_ID="<your-tenant1-client-id>"
 
-# Test Marimer
-echo "TEST 1: Marimer LLC Tenant"
+# Test Tenant1
+echo "TEST 1: Tenant1 Account"
 echo "----------------------------------------"
 export MS365_MCP_CLIENT_ID="$CLIENT_ID"
-export MS365_MCP_TENANT_ID="<your-marimer-tenant-id>"
+export MS365_MCP_TENANT_ID="<your-tenant1-tenant-id>"
 
 echo "Client ID: $MS365_MCP_CLIENT_ID"
 echo "Tenant ID: $MS365_MCP_TENANT_ID"
-echo "Expected User: rocky@marimer.llc"
+echo "Expected User: user@example.com"
 echo ""
-echo "Starting MCP server for Marimer..."
-echo "If prompted, authenticate with rocky@marimer.llc"
+echo "Starting MCP server for Tenant1..."
+echo "If prompted, authenticate with your Tenant1 account"
 echo ""
 
 # Run in background and capture output
-timeout 30s npx @softeria/ms-365-mcp-server --org-mode > /tmp/marimer-test.log 2>&1 &
-MARIMER_PID=$!
+timeout 30s npx @softeria/ms-365-mcp-server --org-mode > /tmp/tenant1-test.log 2>&1 &
+TENANT1_PID=$!
 
 sleep 5
 
-if ps -p $MARIMER_PID > /dev/null 2>&1; then
-    echo "✅ Marimer MCP server is running (PID: $MARIMER_PID)"
-    kill $MARIMER_PID 2>/dev/null
+if ps -p $TENANT1_PID > /dev/null 2>&1; then
+    echo "✅ Tenant1 MCP server is running (PID: $TENANT1_PID)"
+    kill $TENANT1_PID 2>/dev/null
 else
-    echo "⚠️  Server may have exited - check /tmp/marimer-test.log"
+    echo "⚠️  Server may have exited - check /tmp/tenant1-test.log"
 fi
 
 echo ""
-echo "Marimer log output:"
-cat /tmp/marimer-test.log | head -30
+echo "Tenant1 log output:"
+cat /tmp/tenant1-test.log | head -30
 echo ""
 echo ""
 
-# Test Xebia
-echo "TEST 2: Xebia Tenant"
+# Test Tenant2
+echo "TEST 2: Tenant2 Account"
 echo "----------------------------------------"
 export MS365_MCP_CLIENT_ID="$CLIENT_ID"
-export MS365_MCP_TENANT_ID="<your-xebia-tenant-id>"
+export MS365_MCP_TENANT_ID="<your-tenant2-tenant-id>"
 
 echo "Client ID: $MS365_MCP_CLIENT_ID"
 echo "Tenant ID: $MS365_MCP_TENANT_ID"
-echo "Expected User: rocky.lhotka@xebia.com"
+echo "Expected User: user@example2.com"
 echo ""
-echo "Starting MCP server for Xebia..."
-echo "If prompted, authenticate with rocky.lhotka@xebia.com"
+echo "Starting MCP server for Tenant2..."
+echo "If prompted, authenticate with your Tenant2 account"
 echo ""
 
-timeout 30s npx @softeria/ms-365-mcp-server --org-mode > /tmp/xebia-test.log 2>&1 &
-XEBIA_PID=$!
+timeout 30s npx @softeria/ms-365-mcp-server --org-mode > /tmp/tenant2-test.log 2>&1 &
+TENANT2_PID=$!
 
 sleep 5
 
-if ps -p $XEBIA_PID > /dev/null 2>&1; then
-    echo "✅ Xebia MCP server is running (PID: $XEBIA_PID)"
-    kill $XEBIA_PID 2>/dev/null
+if ps -p $TENANT2_PID > /dev/null 2>&1; then
+    echo "✅ Tenant2 MCP server is running (PID: $TENANT2_PID)"
+    kill $TENANT2_PID 2>/dev/null
 else
-    echo "⚠️  Server may have exited - check /tmp/xebia-test.log"
+    echo "⚠️  Server may have exited - check /tmp/tenant2-test.log"
 fi
 
 echo ""
-echo "Xebia log output:"
-cat /tmp/xebia-test.log | head -30
+echo "Tenant2 log output:"
+cat /tmp/tenant2-test.log | head -30
 echo ""
 echo ""
 
@@ -84,9 +84,9 @@ echo "2. Try running MCP Inspector to test actual tool calls:"
 echo "   npx @modelcontextprotocol/inspector npx -y @softeria/ms-365-mcp-server --org-mode"
 echo ""
 echo "3. Or test in HTTP mode for easier testing:"
-echo "   # Terminal 1 - Marimer"
-echo "   MS365_MCP_CLIENT_ID=$CLIENT_ID MS365_MCP_TENANT_ID=<your-marimer-tenant-id> npx @softeria/ms-365-mcp-server --org-mode --http 3001"
+echo "   # Terminal 1 - Tenant1"
+echo "   MS365_MCP_CLIENT_ID=$CLIENT_ID MS365_MCP_TENANT_ID=<your-tenant1-tenant-id> npx @softeria/ms-365-mcp-server --org-mode --http 3001"
 echo ""
-echo "   # Terminal 2 - Xebia"
-echo "   MS365_MCP_CLIENT_ID=$CLIENT_ID MS365_MCP_TENANT_ID=<your-xebia-tenant-id> npx @softeria/ms-365-mcp-server --org-mode --http 3002"
+echo "   # Terminal 2 - Tenant2"
+echo "   MS365_MCP_CLIENT_ID=$CLIENT_ID MS365_MCP_TENANT_ID=<your-tenant2-tenant-id> npx @softeria/ms-365-mcp-server --org-mode --http 3002"
 echo ""

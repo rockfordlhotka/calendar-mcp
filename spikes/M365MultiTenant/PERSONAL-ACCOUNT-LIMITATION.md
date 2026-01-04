@@ -181,16 +181,16 @@ while keeping your @outlook.com email address.
 **Decision:** Calendar-MCP will **not support personal accounts** in initial release.
 
 **Alternative Testing Strategy:** Use two organizational accounts for multi-tenant testing:
-- ✅ Marimer LLC (rocky@marimer.llc) - authenticated successfully
-- ⏳ Xebia (rocky.lhotka@xebia.com) - awaiting admin consent
-- ❌ Personal Outlook (rockyl@outlook.com) - separate spike needed for personal account integration
+- ✅ Organization 1 (user@org1.com) - authenticated successfully
+- ⏳ Organization 2 (user@org2.com) - awaiting admin consent
+- ❌ Personal Outlook (user@outlook.com) - separate spike needed for personal account integration
 
-**Recommendation:** Complete spike validation with Marimer + Xebia organizational accounts only. Personal account integration should be evaluated as a **separate spike** with different implementation approach (Outlook.com REST API or EWS).
+**Recommendation:** Complete spike validation with two organizational accounts. Personal account integration should be evaluated as a **separate spike** with different implementation approach (Outlook.com REST API or EWS).
 
 ## Next Steps
 
 1. ✅ **Document personal account limitation** (this file)
-2. ⏳ **Wait for Xebia admin approval** or find alternative org account for testing
-3. ✅ **Multi-tenant testing with two org accounts** (Marimer + Xebia)
+2. ⏳ **Wait for Organization 2 admin approval** or find alternative org account for testing
+3. ✅ **Multi-tenant testing with two org accounts** (Organization 1 + Organization 2)
 4. ✅ **Complete spike with organizational accounts only**
 5. 🔮 **Future spike:** Personal account support via Outlook.com REST API (if needed)

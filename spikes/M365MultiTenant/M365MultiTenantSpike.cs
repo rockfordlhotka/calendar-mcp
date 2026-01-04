@@ -87,7 +87,7 @@ public class M365MultiTenantSpike
     private async Task TestTenant1Connection()
     {
         var mcpServer = CreateMcpServerLauncher(
-            accountId: "xebia-work",
+            accountId: "tenant1-work",
             tenantSection: "Accounts:Tenant1"
         );
         
@@ -105,7 +105,7 @@ public class M365MultiTenantSpike
     private async Task TestTenant2Connection()
     {
         var mcpServer = CreateMcpServerLauncher(
-            accountId: "marimer-work",
+            accountId: "tenant2-work",
             tenantSection: "Accounts:Tenant2"
         );
         
@@ -123,13 +123,13 @@ public class M365MultiTenantSpike
     private async Task TestSimultaneousAccess()
     {
         var tenant1Server = CreateMcpServerLauncher(
-            accountId: "xebia-work",
+            accountId: "tenant1-work",
             tenantSection: "Accounts:Tenant1",
             port: 3001
         );
         
         var tenant2Server = CreateMcpServerLauncher(
-            accountId: "marimer-work",
+            accountId: "tenant2-work",
             tenantSection: "Accounts:Tenant2",
             port: 3002
         );

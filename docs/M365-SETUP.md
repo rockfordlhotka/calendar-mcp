@@ -75,12 +75,12 @@ dotnet run --project src/CalendarMcp.Cli/CalendarMcp.Cli.csproj -- \
 
 The CLI will ask for:
 
-1. **Account ID** (e.g., "xebia-work")
+1. **Account ID** (e.g., "work-account")
    - Unique identifier for this account
    - Used for token cache file naming
    - Lowercase, alphanumeric, hyphens recommended
 
-2. **Display Name** (e.g., "Xebia Work Account")
+2. **Display Name** (e.g., "Work Account")
    - Human-readable name
    - Shown in account listings
 
@@ -92,7 +92,7 @@ The CLI will ask for:
    - The Application (client) ID from Azure Portal
    - Format: `87654321-4321-4321-4321-cba987654321`
 
-5. **Email Domains** (optional, e.g., "xebia.com,example.com")
+5. **Email Domains** (optional, e.g., "example.com,company.com")
    - Comma-separated list of email domains for smart routing
    - Leave empty if not using smart routing
 
@@ -123,7 +123,7 @@ The CLI will show:
 
 ```bash
 dotnet run --project src/CalendarMcp.Cli/CalendarMcp.Cli.csproj -- \
-  test-account xebia-work \
+  test-account work-account \
   --config src/CalendarMcp.StdioServer/appsettings.json
 ```
 
@@ -207,10 +207,10 @@ Use the **same** Client ID for all accounts:
 
 ```bash
 # Add first tenant
-add-m365-account  # Enter: xebia-work, tenant1-id, shared-client-id
+add-m365-account  # Enter: work-account, tenant1-id, shared-client-id
 
 # Add second tenant
-add-m365-account  # Enter: marimer-work, tenant2-id, shared-client-id
+add-m365-account  # Enter: tenant2-account, tenant2-id, shared-client-id
 ```
 
 ### Option 2: Per-Tenant App Registration (More Control)
@@ -222,10 +222,10 @@ Create separate app registrations in each tenant:
 
 ```bash
 # Add first tenant
-add-m365-account  # Enter: xebia-work, tenant1-id, tenant1-client-id
+add-m365-account  # Enter: work-account, tenant1-id, tenant1-client-id
 
 # Add second tenant
-add-m365-account  # Enter: marimer-work, tenant2-id, tenant2-client-id
+add-m365-account  # Enter: tenant2-account, tenant2-id, tenant2-client-id
 ```
 
 ## Troubleshooting

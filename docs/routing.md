@@ -130,9 +130,9 @@ OUTPUT FORMAT (JSON):
 ```json
 Request: {
   "tool": "get_emails",
-  "accountId": "xebia-work"
+  "accountId": "work-account"
 }
-→ Router decision: Direct route to "xebia-work"
+→ Router decision: Direct route to "work-account"
 → Strategy: "explicit"
 ```
 
@@ -157,7 +157,7 @@ Request: {
 → No explicit account
 → No clear domain pattern
 → LLM analyzes: "work calendar" → work-related
-→ Router decision: "xebia-work" (work account)
+→ Router decision: "work-account" (work account)
 → Strategy: "llm"
 → Confidence: 0.92
 ```
@@ -170,7 +170,7 @@ Request: {
 }
 → No explicit account
 → "all" implies aggregation
-→ Router decision: ["xebia-work", "marimer-work", "rocky-gmail"]
+→ Router decision: ["work-account", "tenant2-account", "personal-gmail"]
 → Strategy: "multi-account"
 ```
 

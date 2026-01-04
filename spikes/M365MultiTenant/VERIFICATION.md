@@ -18,9 +18,9 @@ When the MCP server starts without errors, it typically means:
 The MCP Inspector provides a web UI to test MCP servers:
 
 ```bash
-# Test Marimer tenant
-export MS365_MCP_CLIENT_ID="<your-marimer-client-id>"
-export MS365_MCP_TENANT_ID="<your-marimer-tenant-id>"
+# Test Tenant1
+export MS365_MCP_CLIENT_ID="<your-tenant1-client-id>"
+export MS365_MCP_TENANT_ID="<your-tenant1-tenant-id>"
 npx @modelcontextprotocol/inspector npx -y @softeria/ms-365-mcp-server --org-mode
 ```
 
@@ -34,17 +34,17 @@ This will:
 
 Running in HTTP mode makes it easier to see what's happening:
 
-**Terminal 1 - Marimer:**
+**Terminal 1 - Tenant1:**
 ```bash
-export MS365_MCP_CLIENT_ID="<your-marimer-client-id>"
-export MS365_MCP_TENANT_ID="<your-marimer-tenant-id>"
+export MS365_MCP_CLIENT_ID="<your-tenant1-client-id>"
+export MS365_MCP_TENANT_ID="<your-tenant1-tenant-id>"
 npx @softeria/ms-365-mcp-server --org-mode --http 3001
 ```
 
-**Terminal 2 - Xebia:**
+**Terminal 2 - Tenant2:**
 ```bash
-export MS365_MCP_CLIENT_ID="<your-xebia-client-id>"
-export MS365_MCP_TENANT_ID="<your-xebia-tenant-id>"
+export MS365_MCP_CLIENT_ID="<your-tenant2-client-id>"
+export MS365_MCP_TENANT_ID="<your-tenant2-tenant-id>"
 npx @softeria/ms-365-mcp-server --org-mode --http 3002
 ```
 
@@ -53,7 +53,7 @@ Look for output like:
 Server started on port 3001
 Authentication: Device code flow
 [INFO] Token cache found - using cached credentials
-[INFO] Authenticated as: rocky@marimer.llc
+[INFO] Authenticated as: user@example.com
 ```
 
 ### Check Authentication Status
@@ -73,12 +73,12 @@ cat %USERPROFILE%\.ms-365-mcp-tokens.json
 
 ## What Success Looks Like
 
-### ✅ Marimer (Admin approved app):
+### ✅ Tenant1 (Admin approved app):
 - Server starts immediately
 - No authentication prompts (tokens cached)
 - Can call tools like `list-calendars` successfully
 
-### ✅ Xebia (Depends on user consent policy):
+### ✅ Tenant2 (Depends on user consent policy):
 
 **Scenario A: User consent allowed**
 - Server starts
@@ -88,14 +88,14 @@ cat %USERPROFILE%\.ms-365-mcp-tokens.json
 **Scenario B: Admin approval required**
 - Server starts
 - First tool call shows error: "AADSTS65001: User or administrator has not consented"
-- You need to send consent request to Xebia IT admin
+- You need to send consent request to Tenant2 IT admin
 
 ## Spike Success Criteria
 
 The spike is successful if you can:
-1. ✅ Start MCP server for Marimer tenant
-2. ✅ Start MCP server for Xebia tenant (even if needs IT approval)
-3. ✅ Call `list-calendars` on Marimer and get your calendars
+1. ✅ Start MCP server for Tenant1
+2. ✅ Start MCP server for Tenant2 (even if needs IT approval)
+3. ✅ Call `list-calendars` on Tenant1 and get your calendars
 4. ✅ Run both servers simultaneously on different ports
 5. Document the authentication flow and any limitations
 
@@ -112,11 +112,11 @@ This will test the orchestration layer managing multiple MCP server instances.
 
 ## Troubleshooting
 
-**If you see "Need admin approval" for Xebia:**
-1. This is expected if Xebia restricts user consent
+**If you see "Need admin approval" for Tenant2:**
+1. This is expected if Tenant2 restricts user consent
 2. The app still works - you just need IT approval
 3. Document this as a limitation for the spike
-4. For the spike purposes, having Marimer working proves the concept
+4. For the spike purposes, having Tenant1 working proves the concept
 
 **If servers exit immediately:**
 - Check the logs for error messages
@@ -126,8 +126,8 @@ This will test the orchestration layer managing multiple MCP server instances.
 ## Document Your Findings
 
 Create a findings document with:
-- ✅ What worked (Marimer authentication)
-- ⚠️  What needs approval (Xebia if applicable)
+- ✅ What worked (Tenant1 authentication)
+- ⚠️  What needs approval (Tenant2 if applicable)
 - ✅ Multi-instance capability (can run both simultaneously)
 - 📊 Performance observations (startup time, token caching)
 - 🔧 Integration notes (how to call from C#)

@@ -18,7 +18,7 @@
    - User support email: Your email
    - Developer contact: Your email
    - Scopes: Don't add any (app requests them at runtime)
-   - Test users: Add your email (rocky@lhotka.net)
+   - Test users: Add your email (your Google account email)
 4. Create OAuth client:
    - Application type: **Desktop app**
    - Name: "GoogleWorkspaceSpike"
@@ -52,7 +52,7 @@ Edit `appsettings.Development.json`:
   "Google": {
     "ClientId": "123456789.apps.googleusercontent.com",
     "ClientSecret": "GOCSPX-xxxxxxxxxxxxx",
-    "UserEmail": "rocky@lhotka.net",
+    "UserEmail": "user@example.net",
     "Scopes": [
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.send",
@@ -73,7 +73,7 @@ dotnet run
 ### First Run - OAuth Flow
 
 1. **Browser opens automatically**
-2. **Sign in** with rocky@lhotka.net
+2. **Sign in** with your Google account
 3. **Review permissions** - app requests:
    - Read, compose, and send email from Gmail
    - View and edit events on all calendars
@@ -88,7 +88,7 @@ dotnet run
 Testing Gmail and Google Calendar integration
 
 Initializing Google OAuth authentication...
-User: rocky@lhotka.net
+User: user@example.net
 Token cache path: C:\Users\...\\.credentials\google-workspace-spike
 ✓ Google authentication successful
 
@@ -104,7 +104,7 @@ Unread Messages:
 
 === Testing Google Calendar ===
 Your Calendars:
-  • rocky@lhotka.net (ID: primary)
+  • user@example.net (ID: primary)
 
 === Upcoming Events (Next 7 days) ===
   • Event Name

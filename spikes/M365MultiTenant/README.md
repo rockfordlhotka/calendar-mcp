@@ -4,8 +4,8 @@ This spike validates the ability to connect to multiple Microsoft 365 tenants si
 
 ## Objectives
 
-1. **Test single tenant connection** - Verify connection to Tenant 1 (Xebia)
-2. **Test second tenant connection** - Verify connection to Tenant 2 (Marimer)
+1. **Test single tenant connection** - Verify connection to Tenant 1
+2. **Test second tenant connection** - Verify connection to Tenant 2
 3. **Test simultaneous access** - Verify both tenants can be accessed in parallel
 
 ## Prerequisites
@@ -78,16 +78,16 @@ Edit `appsettings.Development.json` and add your actual tenant IDs and client ID
 {
   "Accounts": {
     "Tenant1": {
-      "TenantId": "your-actual-xebia-tenant-id",
-      "ClientId": "your-actual-xebia-client-id",
+      "TenantId": "your-actual-tenant1-id",
+      "ClientId": "your-actual-tenant1-client-id",
       "ClientSecret": "your-client-secret-here",
-      "DisplayName": "Xebia Work"
+      "DisplayName": "Work Account 1"
     },
     "Tenant2": {
-      "TenantId": "your-actual-marimer-tenant-id",
-      "ClientId": "your-actual-marimer-client-id",
+      "TenantId": "your-actual-tenant2-id",
+      "ClientId": "your-actual-tenant2-client-id",
       "ClientSecret": "your-client-secret-here",
-      "DisplayName": "Marimer M365"
+      "DisplayName": "Work Account 2"
     }
   },
   "McpServer": {
@@ -123,16 +123,16 @@ Starting M365 Multi-Tenant Spike
 ===========================================
 
 TEST 1: Testing Tenant 1 connection...
-Starting MCP server for account: xebia-work (Xebia Work)
+Starting MCP server for account: tenant1-work (Work Account 1)
   Tenant ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
   Client ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
   Port: 3000
-✓ MCP server started for xebia-work
-  Testing calendar access for xebia-work...
-  ✓ Calendar access test completed for xebia-work
-  Testing email access for xebia-work...
-  ✓ Email access test completed for xebia-work
-Stopping MCP server for xebia-work
+✓ MCP server started for tenant1-work
+  Testing calendar access for tenant1-work...
+  ✓ Calendar access test completed for tenant1-work
+  Testing email access for tenant1-work...
+  ✓ Email access test completed for tenant1-work
+Stopping MCP server for tenant1-work
 ✓ Tenant 1 test completed
 
 TEST 2: Testing Tenant 2 connection...

@@ -131,5 +131,5 @@ See the ModelContextProtocol.NET documentation for more details.
 ## References
 
 - [Model Context Protocol Specification](https://modelcontextprotocol.io/)
-- [ModelContextProtocol.NET](https://github.com/MarimerLLC/ModelContextProtocol.NET)
+- [ModelContextProtocol for .NET](https://github.com/modelcontextprotocol/dotnet-sdk)
 - [MCP Stdio Transport](https://spec.modelcontextprotocol.io/specification/basic/transports/#stdio)

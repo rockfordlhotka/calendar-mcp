@@ -9,7 +9,7 @@ Calendar-MCP implements **per-account authentication** with strict isolation bet
 ```
 Provider (M365, Google, Outlook.com)
   ↓
-Account (xebia-work, marimer-work, rocky-gmail, etc.)
+Account (work-account, tenant2-account, personal-gmail, etc.)
   ↓
 App Registration / OAuth Client (shared OR per-tenant, user configurable)
   ↓
@@ -27,7 +27,7 @@ Token Cache (unique per account - ALWAYS separate)
 - App must be multi-tenant ("Accounts in any organizational directory")
 - Works when tenant admins allow external apps
 - User's choice of ClientId in each account config
-- **Example**: Single ClientId (`aaa...`) shared by Xebia, Marimer, and other tenants
+- **Example**: Single ClientId (`aaa...`) shared by Tenant1, Tenant2, and other tenants
 
 **Google**:
 - **One OAuth client** used across multiple accounts
@@ -47,13 +47,13 @@ Token Cache (unique per account - ALWAYS separate)
 - Required when tenant IT policies block external apps
 - Each tenant admin creates their own app registration
 - More control, tenant-specific permissions
-- **Example**: Xebia uses ClientId `aaa...`, Marimer uses ClientId `bbb...`
+- **Example**: Tenant1 uses ClientId `aaa...`, Tenant2 uses ClientId `bbb...`
 
 **Google Workspace**:
 - **Separate OAuth client per organization**
 - Required when Workspace admin restricts external OAuth apps
 - Each organization creates their own Google Cloud project
-- **Example**: Personal uses ClientId `123...`, Marimer Workspace uses ClientId `456...`
+- **Example**: Personal uses ClientId `123...`, Company Workspace uses ClientId `456...`
 
 ### Why Configuration Flexibility?
 
@@ -82,9 +82,9 @@ Token Cache (unique per account - ALWAYS separate)
 ```
 
 Examples:
-- `msal_cache_xebia-work.bin` (M365 tenant 1)
-- `msal_cache_marimer-work.bin` (M365 tenant 2)
-- `msal_cache_rocky-outlook.bin` (Outlook.com personal)
+- `msal_cache_work-account.bin` (M365 tenant 1)
+- `msal_cache_tenant2-account.bin` (M365 tenant 2)
+- `msal_cache_personal-outlook.bin` (Outlook.com personal)
 
 **Implementation Pattern** (from M365DirectAccess spike):
 ```csharp
@@ -128,8 +128,8 @@ cacheHelper.RegisterCache(app.UserTokenCache);
 ```
 
 Examples:
-- `~/.credentials/calendar-mcp/rocky-gmail/` (personal Gmail)
-- `~/.credentials/calendar-mcp/marimer-gsuite/` (G Suite account)
+- `~/.credentials/calendar-mcp/personal-gmail/` (personal Gmail)
+- `~/.credentials/calendar-mcp/work-gsuite/` (G Suite account)
 
 **Implementation Pattern** (from GoogleWorkspace spike):
 ```csharp

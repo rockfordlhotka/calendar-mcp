@@ -46,13 +46,13 @@ npx @softeria/ms-365-mcp-server --org-mode
 #### Example Usage:
 ```bash
 # For Tenant 1
-MS365_MCP_CLIENT_ID=xebia-client-id \
-MS365_MCP_TENANT_ID=xebia-tenant-id \
+MS365_MCP_CLIENT_ID=tenant1-client-id \
+MS365_MCP_TENANT_ID=tenant1-tenant-id \
 npx @softeria/ms-365-mcp-server --org-mode --http 3001
 
 # For Tenant 2
-MS365_MCP_CLIENT_ID=marimer-client-id \
-MS365_MCP_TENANT_ID=marimer-tenant-id \
+MS365_MCP_CLIENT_ID=tenant2-client-id \
+MS365_MCP_TENANT_ID=tenant2-tenant-id \
 npx @softeria/ms-365-mcp-server --org-mode --http 3002
 ```
 
@@ -221,14 +221,14 @@ uv run authenticate.py
 
 4. **Run multi-instance test**:
    ```bash
-   # Terminal 1 - Xebia tenant
-   MS365_MCP_CLIENT_ID=$XEBIA_CLIENT_ID \
-   MS365_MCP_TENANT_ID=$XEBIA_TENANT_ID \
+   # Terminal 1 - Tenant1
+   MS365_MCP_CLIENT_ID=$TENANT1_CLIENT_ID \
+   MS365_MCP_TENANT_ID=$TENANT1_TENANT_ID \
    npx @softeria/ms-365-mcp-server --org-mode --http 3001
    
-   # Terminal 2 - Marimer tenant
-   MS365_MCP_CLIENT_ID=$MARIMER_CLIENT_ID \
-   MS365_MCP_TENANT_ID=$MARIMER_TENANT_ID \
+   # Terminal 2 - Tenant2
+   MS365_MCP_CLIENT_ID=$TENANT2_CLIENT_ID \
+   MS365_MCP_TENANT_ID=$TENANT2_TENANT_ID \
    npx @softeria/ms-365-mcp-server --org-mode --http 3002
    ```
 
@@ -308,11 +308,11 @@ graph TD
     A[AI Assistant] --> B[Calendar-MCP Server]
     B --> C[Account Registry]
     B --> D[Smart Router]
-    D --> E1[Softeria Instance 1<br/>Port 3001<br/>Xebia Tenant]
-    D --> E2[Softeria Instance 2<br/>Port 3002<br/>Marimer Tenant]
+    D --> E1[Softeria Instance 1<br/>Port 3001<br/>Tenant1]
+    D --> E2[Softeria Instance 2<br/>Port 3002<br/>Tenant2]
     D --> E3[Softeria Instance 3<br/>Port 3003<br/>Outlook.com]
-    E1 --> F1[Microsoft Graph API<br/>Xebia]
-    E2 --> F2[Microsoft Graph API<br/>Marimer]
+    E1 --> F1[Microsoft Graph API<br/>Tenant1]
+    E2 --> F2[Microsoft Graph API<br/>Tenant2]
     E3 --> F3[Microsoft Graph API<br/>Outlook.com]
 ```
 

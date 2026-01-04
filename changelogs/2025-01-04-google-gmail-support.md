@@ -2,7 +2,7 @@
 
 ## Summary
 
-Added full Google Workspace/Gmail support for authentication (CLI) and tools (StdioServer), including support for custom domains like lhotka.net.
+Added full Google Workspace/Gmail support for authentication (CLI) and tools (StdioServer), including support for custom domains.
 
 ## Changes Made
 
@@ -26,7 +26,7 @@ Added full Google Workspace/Gmail support for authentication (CLI) and tools (St
 - `Commands/AddGoogleAccountCommand.cs` - Interactive command to add Google accounts:
   - Supports Gmail (@gmail.com)
   - Supports Google Workspace
-  - Supports custom domains (e.g., lhotka.net)
+  - Supports custom domains (e.g., example.net)
   - Prompts for Client ID and Client Secret from Google Cloud Console
   - Interactive OAuth authentication flow
   - Saves credentials to per-account directory
@@ -59,7 +59,7 @@ Added full Google Workspace/Gmail support for authentication (CLI) and tools (St
   "CalendarMcp": {
     "Accounts": [
       {
-        "id": "rocky-gmail",
+        "id": "personal-gmail",
         "displayName": "Personal Gmail",
         "provider": "google",
         "enabled": true,
@@ -71,12 +71,12 @@ Added full Google Workspace/Gmail support for authentication (CLI) and tools (St
         }
       },
       {
-        "id": "lhotka-workspace",
-        "displayName": "Lhotka.net Workspace",
+        "id": "work-workspace",
+        "displayName": "Work Workspace",
         "provider": "google",
         "enabled": true,
         "priority": 1,
-        "domains": ["lhotka.net"],
+        "domains": ["example.net"],
         "providerConfig": {
           "clientId": "987654321.apps.googleusercontent.com",
           "clientSecret": "GOCSPX-yyyyyyyyyyyy"

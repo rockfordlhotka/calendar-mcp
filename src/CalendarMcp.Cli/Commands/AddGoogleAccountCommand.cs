@@ -8,7 +8,7 @@ using System.ComponentModel;
 namespace CalendarMcp.Cli.Commands;
 
 /// <summary>
-/// Command to add a new Google Workspace or Gmail account (including custom domains like lhotka.net)
+/// Command to add a new Google Workspace or Gmail account (including custom domains)
 /// </summary>
 public class AddGoogleAccountCommand : AsyncCommand<AddGoogleAccountCommand.Settings>
 {
@@ -34,7 +34,7 @@ public class AddGoogleAccountCommand : AsyncCommand<AddGoogleAccountCommand.Sett
 
         AnsiConsole.MarkupLine("[bold]Add Google Account[/]");
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[dim]Supports Gmail (@gmail.com), Google Workspace, and custom domains (e.g., lhotka.net)[/]");
+        AnsiConsole.MarkupLine("[dim]Supports Gmail (@gmail.com), Google Workspace, and custom domains (e.g., company.com)[/]");
         AnsiConsole.WriteLine();
 
         // Determine config file path - use shared ConfigurationPaths by default
@@ -70,12 +70,12 @@ public class AddGoogleAccountCommand : AsyncCommand<AddGoogleAccountCommand.Sett
 
         // Prompt for account details
         var accountId = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Account ID[/] (e.g., 'rocky-gmail' or 'lhotka-workspace'):")
+            new TextPrompt<string>("[green]Account ID[/] (e.g., 'personal-gmail' or 'work-workspace'):")
                 .ValidationErrorMessage("[red]Account ID is required[/]")
                 .Validate(id => !string.IsNullOrWhiteSpace(id)));
 
         var displayName = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Display Name[/] (e.g., 'Personal Gmail' or 'Lhotka.net Workspace'):")
+            new TextPrompt<string>("[green]Display Name[/] (e.g., 'Personal Gmail' or 'Work Workspace'):")
                 .ValidationErrorMessage("[red]Display name is required[/]")
                 .Validate(name => !string.IsNullOrWhiteSpace(name)));
 
@@ -91,7 +91,7 @@ public class AddGoogleAccountCommand : AsyncCommand<AddGoogleAccountCommand.Sett
                 .Validate(cs => !string.IsNullOrWhiteSpace(cs)));
 
         var domains = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Email Domains[/] (comma-separated, e.g., 'gmail.com' or 'lhotka.net'):")
+            new TextPrompt<string>("[green]Email Domains[/] (comma-separated, e.g., 'gmail.com' or 'company.com'):")
                 .DefaultValue("gmail.com"));
 
         var priority = AnsiConsole.Prompt(

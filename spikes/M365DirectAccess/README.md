@@ -102,15 +102,15 @@ Edit `appsettings.Development.json` with your actual credentials:
 {
   "Tenants": {
     "Tenant1": {
-      "Name": "Xebia Work",
-      "TenantId": "your-actual-xebia-tenant-id",
-      "ClientId": "your-actual-xebia-client-id",
+      "Name": "Tenant1 Work",
+      "TenantId": "your-actual-tenant1-tenant-id",
+      "ClientId": "your-actual-tenant1-client-id",
       "Enabled": true
     },
     "Tenant2": {
-      "Name": "Marimer M365",
-      "TenantId": "your-actual-marimer-tenant-id",
-      "ClientId": "your-actual-marimer-client-id",
+      "Name": "Tenant2 M365",
+      "TenantId": "your-actual-tenant2-tenant-id",
+      "ClientId": "your-actual-tenant2-client-id",
       "Enabled": true
     }
   }
@@ -160,40 +160,40 @@ M365 Multi-Tenant Direct Access Spike
 ===========================================
 
 Found 2 enabled tenant(s):
-  - Tenant1: Xebia Work
-  - Tenant2: Marimer M365
+  - Tenant1: Tenant1 Work
+  - Tenant2: Tenant2 M365
 
-Initialized MSAL app for tenant: Xebia Work
-Initialized MSAL app for tenant: Marimer M365
+Initialized MSAL app for tenant: Tenant1 Work
+Initialized MSAL app for tenant: Tenant2 M365
 
 ===========================================
 TEST 1: Sequential Authentication
 ===========================================
 
-Authenticating to: Xebia Work
-Starting interactive authentication for Xebia Work...
+Authenticating to: Tenant1 Work
+Starting interactive authentication for Tenant1 Work...
 A browser window will open for you to sign in.
-✓ Interactive authentication successful for Xebia Work
-✓ Token obtained for Xebia Work
+✓ Interactive authentication successful for Tenant1 Work
+✓ Token obtained for Tenant1 Work
   Token preview: eyJ0eXAiOiJKV1QiLCJ...
 
-Authenticating to: Marimer M365
-Attempting silent authentication for Marimer M365...
-✓ Silent authentication successful for Marimer M365
-✓ Token obtained for Marimer M365
+Authenticating to: Tenant2 M365
+Attempting silent authentication for Tenant2 M365...
+✓ Silent authentication successful for Tenant2 M365
+✓ Token obtained for Tenant2 M365
   Token preview: eyJ0eXAiOiJKV1QiLCJ...
 
 ===========================================
 TEST 2: Sequential Calendar Access
 ===========================================
 
-Testing calendar access for: Xebia Work
-Fetching calendars for Xebia Work...
-✓ Found 2 calendar(s) for Xebia Work
+Testing calendar access for: Tenant1 Work
+Fetching calendars for Tenant1 Work...
+✓ Found 2 calendar(s) for Tenant1 Work
   📅 Calendar
   📅 Birthdays
-Fetching up to 5 events for Xebia Work...
-✓ Found 3 event(s) for Xebia Work
+Fetching up to 5 events for Tenant1 Work...
+✓ Found 3 event(s) for Tenant1 Work
   Recent events:
     • Team Standup
       2024-12-05T09:00:00
@@ -208,19 +208,19 @@ Fetching up to 5 events for Xebia Work...
 TEST 3: Sequential Mail Access
 ===========================================
 
-Testing mail access for: Xebia Work
-Fetching unread count for Xebia Work...
-✓ Unread count for Xebia Work: 12
+Testing mail access for: Tenant1 Work
+Fetching unread count for Tenant1 Work...
+✓ Unread count for Tenant1 Work: 12
   📧 Unread messages: 12
-Fetching up to 3 messages for Xebia Work...
-✓ Found 3 message(s) for Xebia Work
+Fetching up to 3 messages for Tenant1 Work...
+✓ Found 3 message(s) for Tenant1 Work
   Recent messages:
     • Weekly Status Report
-      From: manager@xebia.com
+      From: manager@example.com
     • [Project X] Update
-      From: teammate@xebia.com
+      From: teammate@example.com
     • Meeting Notes
-      From: colleague@xebia.com
+      From: colleague@example.com
 
 [Similar output for Tenant 2...]
 
@@ -229,13 +229,13 @@ TEST 4: Parallel Multi-Tenant Access
 ===========================================
 
 Fetching calendar data from all tenants in parallel...
-Fetching up to 3 events for Xebia Work...
-Fetching up to 3 events for Marimer M365...
-✓ Found 3 event(s) for Xebia Work
-✓ Found 2 event(s) for Marimer M365
+Fetching up to 3 events for Tenant1 Work...
+Fetching up to 3 events for Tenant2 M365...
+✓ Found 3 event(s) for Tenant1 Work
+✓ Found 2 event(s) for Tenant2 M365
 Parallel access results:
-  ✓ Xebia Work: 3 events
-  ✓ Marimer M365: 2 events
+  ✓ Tenant1 Work: 3 events
+  ✓ Tenant2 M365: 2 events
 
 ===========================================
 ✓ Spike Completed Successfully

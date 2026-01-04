@@ -274,7 +274,7 @@ Each span includes:
 [14:32:45 INF] Activity: MCP.GetEmails
   Tags:
     mcp.tool: get_emails
-    mcp.account_id: xebia-work
+    mcp.account_id: work-account
     mcp.count: 20
     mcp.result_count: 15
   Duration: 234ms
@@ -400,9 +400,9 @@ public static class TelemetryRedactor
 ### Safe Metadata
 
 **Never redacted** (safe for telemetry):
-- Account IDs (e.g., "xebia-work")
+- Account IDs (e.g., "work-account")
 - Provider types (e.g., "microsoft365")
-- Email domains (e.g., "xebia.com")
+- Email domains (e.g., "example.com")
 - Message counts
 - Timestamps
 - Status codes
