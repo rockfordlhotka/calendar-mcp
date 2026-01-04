@@ -16,8 +16,9 @@ services.AddLogging(builder =>
     builder.SetMinimumLevel(LogLevel.Information);
 });
 
-// Add authentication service
+// Add authentication services
 services.AddSingleton<IM365AuthenticationService, M365AuthenticationService>();
+services.AddSingleton<IGoogleAuthenticationService, GoogleAuthenticationService>();
 
 // Create service provider
 var registrar = new TypeRegistrar(services);
@@ -36,6 +37,11 @@ app.Configure(config =>
         .WithDescription("Add a new Outlook.com personal account (Outlook.com, Hotmail, Live)")
         .WithExample(new[] { "add-outlook-account" })
         .WithExample(new[] { "add-outlook-account", "--config", "/path/to/appsettings.json" });
+
+    config.AddCommand<AddGoogleAccountCommand>("add-google-account")
+        .WithDescription("Add a new Google account (Gmail, Google Workspace, or custom domain)")
+        .WithExample(new[] { "add-google-account" })
+        .WithExample(new[] { "add-google-account", "--config", "/path/to/appsettings.json" });
 
     config.AddCommand<ListAccountsCommand>("list-accounts")
         .WithDescription("List all configured accounts")

@@ -12,7 +12,8 @@ namespace CalendarMcp.Cli.Commands;
 /// </summary>
 public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
 {
-    private readonly IM365AuthenticationService _authService;
+    private readonly IM365AuthenticationService _m365AuthService;
+    private readonly IGoogleAuthenticationService _googleAuthService;
 
     public class Settings : CommandSettings
     {
@@ -25,9 +26,10 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
         public required string AccountId { get; init; }
     }
 
-    public TestAccountCommand(IM365AuthenticationService authService)
+    public TestAccountCommand(IM365AuthenticationService m365AuthService, IGoogleAuthenticationService googleAuthService)
     {
-        _authService = authService;
+        _m365AuthService = m365AuthService;
+        _googleAuthService = googleAuthService;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -79,11 +81,11 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             // Get account details
             var provider = account.TryGetValue("Provider", out var provElem) ? provElem.GetString() : "";
             
-            // Support both M365 and Outlook.com accounts (both use MSAL/Graph)
-            if (provider != "microsoft365" && provider != "outlook.com")
+            // Support M365, Outlook.com, and Google accounts
+            if (provider != "microsoft365" && provider != "outlook.com" && provider != "google")
             {
-                AnsiConsole.MarkupLine($"[red]Error: Only Microsoft 365 and Outlook.com accounts are supported for testing at this time.[/]");
-                AnsiConsole.MarkupLine($"[dim]Account provider: {provider}[/]");
+                AnsiConsole.MarkupLine($"[red]Error: Unsupported provider '{provider}'.[/]");
+                AnsiConsole.MarkupLine($"[dim]Supported providers: microsoft365, outlook.com, google[/]");
                 return 1;
             }
 
@@ -98,65 +100,136 @@ public class TestAccountCommand : AsyncCommand<TestAccountCommand.Settings>
             var providerConfig = providerConfigElem.Deserialize<Dictionary<string, string>>() 
                 ?? new Dictionary<string, string>();
 
-            // Try both PascalCase and camelCase for config keys
-            if (!providerConfig.TryGetValue("TenantId", out var tenantId))
-                providerConfig.TryGetValue("tenantId", out tenantId);
-            if (!providerConfig.TryGetValue("ClientId", out var clientId))
-                providerConfig.TryGetValue("clientId", out clientId);
-                
-            if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId))
+            if (provider == "google")
             {
-                AnsiConsole.MarkupLine($"[red]Error: Account missing tenantId or clientId.[/]");
-                return 1;
-            }
-
-            // Default scopes
-            var scopes = new[]
-            {
-                "Mail.Read",
-                "Calendars.ReadWrite"
-            };
-
-            AnsiConsole.MarkupLine("[yellow]Testing silent authentication...[/]");
-
-            var token = await AnsiConsole.Status()
-                .StartAsync("Retrieving token from cache...", async ctx =>
-                {
-                    return await _authService.GetTokenSilentlyAsync(
-                        tenantId,
-                        clientId,
-                        scopes,
-                        settings.AccountId);
-                });
-
-            if (token != null)
-            {
-                AnsiConsole.MarkupLine("[green]✓ Authentication successful![/]");
-                AnsiConsole.MarkupLine($"[dim]Token: {token[..20]}...[/]");
-                AnsiConsole.WriteLine();
-                
-                var table = new Table();
-                table.AddColumn("Property");
-                table.AddColumn("Value");
-                table.AddRow("Account ID", settings.AccountId);
-                table.AddRow("Status", "[green]Authenticated[/]");
-                table.AddRow("Token Cached", "✓ Yes");
-                
-                AnsiConsole.Write(table);
-                
-                return 0;
+                return await TestGoogleAccountAsync(settings.AccountId, providerConfig);
             }
             else
             {
-                AnsiConsole.MarkupLine("[yellow]! No cached token found. Interactive authentication required.[/]");
-                var authCommand = provider == "outlook.com" ? "add-outlook-account" : "add-m365-account";
-                AnsiConsole.MarkupLine($"[dim]Run '{authCommand}' to authenticate this account.[/]");
-                return 1;
+                return await TestMicrosoftAccountAsync(settings.AccountId, providerConfig, provider);
             }
         }
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+            return 1;
+        }
+    }
+
+    private async Task<int> TestMicrosoftAccountAsync(string accountId, Dictionary<string, string> providerConfig, string provider)
+    {
+        // Try both PascalCase and camelCase for config keys
+        if (!providerConfig.TryGetValue("TenantId", out var tenantId))
+            providerConfig.TryGetValue("tenantId", out tenantId);
+        if (!providerConfig.TryGetValue("ClientId", out var clientId))
+            providerConfig.TryGetValue("clientId", out clientId);
+            
+        if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId))
+        {
+            AnsiConsole.MarkupLine($"[red]Error: Account missing tenantId or clientId.[/]");
+            return 1;
+        }
+
+        // Default scopes
+        var scopes = new[]
+        {
+            "Mail.Read",
+            "Calendars.ReadWrite"
+        };
+
+        AnsiConsole.MarkupLine("[yellow]Testing silent authentication...[/]");
+
+        var token = await AnsiConsole.Status()
+            .StartAsync("Retrieving token from cache...", async ctx =>
+            {
+                return await _m365AuthService.GetTokenSilentlyAsync(
+                    tenantId,
+                    clientId,
+                    scopes,
+                    accountId);
+            });
+
+        if (token != null)
+        {
+            AnsiConsole.MarkupLine("[green]✓ Authentication successful![/]");
+            AnsiConsole.MarkupLine($"[dim]Token: {token[..20]}...[/]");
+            AnsiConsole.WriteLine();
+            
+            var table = new Table();
+            table.AddColumn("Property");
+            table.AddColumn("Value");
+            table.AddRow("Account ID", accountId);
+            table.AddRow("Provider", provider);
+            table.AddRow("Status", "[green]Authenticated[/]");
+            table.AddRow("Token Cached", "✓ Yes");
+            
+            AnsiConsole.Write(table);
+            
+            return 0;
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[yellow]! No cached token found. Interactive authentication required.[/]");
+            var authCommand = provider == "outlook.com" ? "add-outlook-account" : "add-m365-account";
+            AnsiConsole.MarkupLine($"[dim]Run '{authCommand}' to authenticate this account.[/]");
+            return 1;
+        }
+    }
+
+    private async Task<int> TestGoogleAccountAsync(string accountId, Dictionary<string, string> providerConfig)
+    {
+        // Try both PascalCase and camelCase for config keys
+        if (!providerConfig.TryGetValue("ClientId", out var clientId))
+            providerConfig.TryGetValue("clientId", out clientId);
+        if (!providerConfig.TryGetValue("ClientSecret", out var clientSecret))
+            providerConfig.TryGetValue("clientSecret", out clientSecret);
+            
+        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+        {
+            AnsiConsole.MarkupLine($"[red]Error: Account missing clientId or clientSecret.[/]");
+            return 1;
+        }
+
+        // Default scopes for Google
+        var scopes = new[]
+        {
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/calendar.readonly"
+        };
+
+        AnsiConsole.MarkupLine("[yellow]Testing cached credential...[/]");
+
+        var hasCredential = await AnsiConsole.Status()
+            .StartAsync("Checking credential cache...", async ctx =>
+            {
+                return await _googleAuthService.HasValidCredentialAsync(
+                    clientId,
+                    clientSecret,
+                    scopes,
+                    accountId);
+            });
+
+        if (hasCredential)
+        {
+            AnsiConsole.MarkupLine("[green]✓ Authentication successful![/]");
+            AnsiConsole.WriteLine();
+            
+            var table = new Table();
+            table.AddColumn("Property");
+            table.AddColumn("Value");
+            table.AddRow("Account ID", accountId);
+            table.AddRow("Provider", "google");
+            table.AddRow("Status", "[green]Authenticated[/]");
+            table.AddRow("Token Cached", "✓ Yes");
+            
+            AnsiConsole.Write(table);
+            
+            return 0;
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[yellow]! No cached credential found. Interactive authentication required.[/]");
+            AnsiConsole.MarkupLine($"[dim]Run 'add-google-account' to authenticate this account.[/]");
             return 1;
         }
     }

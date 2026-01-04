@@ -8,11 +8,11 @@ using System.ComponentModel;
 namespace CalendarMcp.Cli.Commands;
 
 /// <summary>
-/// Command to add a new Outlook.com personal account
+/// Command to add a new Google Workspace or Gmail account (including custom domains like lhotka.net)
 /// </summary>
-public class AddOutlookComAccountCommand : AsyncCommand<AddOutlookComAccountCommand.Settings>
+public class AddGoogleAccountCommand : AsyncCommand<AddGoogleAccountCommand.Settings>
 {
-    private readonly IM365AuthenticationService _authService;
+    private readonly IGoogleAuthenticationService _authService;
 
     public class Settings : CommandSettings
     {
@@ -21,7 +21,7 @@ public class AddOutlookComAccountCommand : AsyncCommand<AddOutlookComAccountComm
         public string? ConfigPath { get; init; }
     }
 
-    public AddOutlookComAccountCommand(IM365AuthenticationService authService)
+    public AddGoogleAccountCommand(IGoogleAuthenticationService authService)
     {
         _authService = authService;
     }
@@ -32,9 +32,9 @@ public class AddOutlookComAccountCommand : AsyncCommand<AddOutlookComAccountComm
             .Centered()
             .Color(Color.Blue));
 
-        AnsiConsole.MarkupLine("[bold]Add Outlook.com Personal Account[/]");
+        AnsiConsole.MarkupLine("[bold]Add Google Account[/]");
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[dim]Outlook.com accounts are personal Microsoft accounts (MSA) like @outlook.com, @hotmail.com, @live.com[/]");
+        AnsiConsole.MarkupLine("[dim]Supports Gmail (@gmail.com), Google Workspace, and custom domains (e.g., lhotka.net)[/]");
         AnsiConsole.WriteLine();
 
         // Determine config file path - use shared ConfigurationPaths by default
@@ -60,69 +60,77 @@ public class AddOutlookComAccountCommand : AsyncCommand<AddOutlookComAccountComm
         AnsiConsole.MarkupLine($"[dim]Using configuration: {configPath}[/]");
         AnsiConsole.WriteLine();
 
+        // Show setup instructions
+        AnsiConsole.MarkupLine("[yellow]Prerequisites:[/]");
+        AnsiConsole.MarkupLine("1. Go to https://console.cloud.google.com/apis/credentials");
+        AnsiConsole.MarkupLine("2. Create OAuth 2.0 Client ID (Desktop app type)");
+        AnsiConsole.MarkupLine("3. Enable Gmail API and Google Calendar API in your project");
+        AnsiConsole.MarkupLine("4. Configure OAuth consent screen (can be 'Internal' for Workspace or 'External' for Gmail)");
+        AnsiConsole.WriteLine();
+
         // Prompt for account details
         var accountId = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Account ID[/] (e.g., 'personal-outlook'):")
+            new TextPrompt<string>("[green]Account ID[/] (e.g., 'rocky-gmail' or 'lhotka-workspace'):")
                 .ValidationErrorMessage("[red]Account ID is required[/]")
                 .Validate(id => !string.IsNullOrWhiteSpace(id)));
 
         var displayName = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Display Name[/] (e.g., 'Personal Outlook'):")
+            new TextPrompt<string>("[green]Display Name[/] (e.g., 'Personal Gmail' or 'Lhotka.net Workspace'):")
                 .ValidationErrorMessage("[red]Display name is required[/]")
                 .Validate(name => !string.IsNullOrWhiteSpace(name)));
 
         var clientId = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Client ID[/] (App registration client ID from Azure portal):")
+            new TextPrompt<string>("[green]Client ID[/] (from Google Cloud Console):")
                 .ValidationErrorMessage("[red]Client ID is required[/]")
                 .Validate(cid => !string.IsNullOrWhiteSpace(cid)));
 
-        // Outlook.com uses "consumers" tenant for personal accounts only
-        // or "common" to support both personal and work accounts
-        var tenantChoice = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("[green]Tenant Type[/]")
-                .AddChoices(new[] {
-                    "consumers - Personal Microsoft accounts only (recommended for Outlook.com)",
-                    "common - Both personal and organizational accounts"
-                }));
-        
-        var tenantId = tenantChoice.StartsWith("consumers") ? "consumers" : "common";
+        var clientSecret = AnsiConsole.Prompt(
+            new TextPrompt<string>("[green]Client Secret[/] (from Google Cloud Console):")
+                .Secret()
+                .ValidationErrorMessage("[red]Client Secret is required[/]")
+                .Validate(cs => !string.IsNullOrWhiteSpace(cs)));
 
         var domains = AnsiConsole.Prompt(
-            new TextPrompt<string>("[green]Email Domains[/] (comma-separated, e.g., 'outlook.com,hotmail.com,live.com'):")
-                .DefaultValue("outlook.com,hotmail.com,live.com"));
+            new TextPrompt<string>("[green]Email Domains[/] (comma-separated, e.g., 'gmail.com' or 'lhotka.net'):")
+                .DefaultValue("gmail.com"));
 
         var priority = AnsiConsole.Prompt(
             new TextPrompt<int>("[green]Priority[/] (higher = preferred, default is 0):")
                 .DefaultValue(0));
 
-        // Default scopes for Outlook.com - same as M365 using Graph API
+        // Default scopes for Gmail/Calendar
         var scopes = new[]
         {
-            "Mail.Read",
-            "Mail.Send",
-            "Calendars.ReadWrite"
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.compose",
+            "https://www.googleapis.com/auth/calendar.readonly",
+            "https://www.googleapis.com/auth/calendar.events"
         };
 
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[yellow]Starting Device Code authentication...[/]");
-        AnsiConsole.MarkupLine("[dim]Outlook.com/MSA accounts require Device Code Flow.[/]");
+        AnsiConsole.MarkupLine("[yellow]Starting authentication...[/]");
+        AnsiConsole.MarkupLine("[dim]A browser window will open. Please sign in with your Google account.[/]");
         AnsiConsole.WriteLine();
 
         try
         {
-            // Authenticate using Device Code Flow for MSA/consumer accounts
-            var token = await _authService.AuthenticateWithDeviceCodeAsync(
-                tenantId,
-                clientId,
-                scopes,
-                accountId,
-                async (message) =>
+            // Authenticate
+            var success = await AnsiConsole.Status()
+                .StartAsync("Authenticating...", async ctx =>
                 {
-                    // Display the device code message to the user
-                    AnsiConsole.MarkupLine($"[yellow]{message}[/]");
-                    await Task.CompletedTask;
+                    return await _authService.AuthenticateInteractiveAsync(
+                        clientId,
+                        clientSecret,
+                        scopes,
+                        accountId);
                 });
+
+            if (!success)
+            {
+                AnsiConsole.MarkupLine("[red]Authentication failed.[/]");
+                return 1;
+            }
 
             AnsiConsole.MarkupLine("[green]✓ Authentication successful![/]");
             AnsiConsole.WriteLine();
@@ -168,15 +176,15 @@ public class AddOutlookComAccountCommand : AsyncCommand<AddOutlookComAccountComm
 
             var providerConfig = new Dictionary<string, string>
             {
-                { "tenantId", tenantId },
-                { "clientId", clientId }
+                { "clientId", clientId },
+                { "clientSecret", clientSecret }
             };
 
             var newAccount = new Dictionary<string, object>
             {
                 { "id", accountId },
                 { "displayName", displayName },
-                { "provider", "outlook.com" },
+                { "provider", "google" },
                 { "enabled", true },
                 { "priority", priority },
                 { "domains", domainList },
@@ -214,9 +222,8 @@ public class AddOutlookComAccountCommand : AsyncCommand<AddOutlookComAccountComm
             table.AddColumn("Value");
             table.AddRow("Account ID", accountId);
             table.AddRow("Display Name", displayName);
-            table.AddRow("Provider", "outlook.com");
-            table.AddRow("Tenant", tenantId);
-            table.AddRow("Client ID", clientId);
+            table.AddRow("Provider", "google");
+            table.AddRow("Client ID", $"{clientId[..20]}...");
             table.AddRow("Domains", string.Join(", ", domainList));
             table.AddRow("Priority", priority.ToString());
             table.AddRow("Token Cached", "✓ Yes");

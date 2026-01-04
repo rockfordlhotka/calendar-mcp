@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
     {
         // Register authentication services
         services.AddSingleton<IM365AuthenticationService, M365AuthenticationService>();
+        services.AddSingleton<IGoogleAuthenticationService, GoogleAuthenticationService>();
         
         // Register provider services
         services.AddSingleton<IM365ProviderService, M365ProviderService>();

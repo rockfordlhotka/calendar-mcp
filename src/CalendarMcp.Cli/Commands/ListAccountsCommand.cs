@@ -75,14 +75,16 @@ public class ListAccountsCommand : AsyncCommand<ListAccountsCommand.Settings>
 
             foreach (var account in accounts)
             {
-                var id = account.TryGetValue("Id", out var idElem) ? idElem.GetString() ?? "" : "";
-                var displayName = account.TryGetValue("DisplayName", out var nameElem) ? nameElem.GetString() ?? "" : "";
-                var provider = account.TryGetValue("Provider", out var provElem) ? provElem.GetString() ?? "" : "";
-                var enabled = account.TryGetValue("Enabled", out var enElem) && enElem.GetBoolean();
-                var priority = account.TryGetValue("Priority", out var prioElem) ? prioElem.GetInt32() : 0;
+                // Support both PascalCase and camelCase property names for backwards compatibility
+                var id = GetStringValue(account, "Id", "id");
+                var displayName = GetStringValue(account, "DisplayName", "displayName");
+                var provider = GetStringValue(account, "Provider", "provider");
+                var enabled = GetBoolValue(account, "Enabled", "enabled");
+                var priority = GetIntValue(account, "Priority", "priority");
                 
                 var domains = "";
-                if (account.TryGetValue("Domains", out var domainsElem) && domainsElem.ValueKind == JsonValueKind.Array)
+                if (TryGetElement(account, out var domainsElem, "Domains", "domains") && 
+                    domainsElem.ValueKind == JsonValueKind.Array)
                 {
                     var domainList = domainsElem.Deserialize<List<string>>() ?? new List<string>();
                     domains = string.Join(", ", domainList);
@@ -111,5 +113,52 @@ public class ListAccountsCommand : AsyncCommand<ListAccountsCommand.Settings>
             AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Try to get a JsonElement by checking multiple property names (for case-insensitive lookup)
+    /// </summary>
+    private static bool TryGetElement(Dictionary<string, JsonElement> dict, out JsonElement element, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (dict.TryGetValue(name, out element))
+                return true;
+        }
+        element = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Get a string value, checking multiple property names
+    /// </summary>
+    private static string GetStringValue(Dictionary<string, JsonElement> dict, params string[] names)
+    {
+        if (TryGetElement(dict, out var elem, names) && elem.ValueKind == JsonValueKind.String)
+            return elem.GetString() ?? "";
+        return "";
+    }
+
+    /// <summary>
+    /// Get a bool value, checking multiple property names
+    /// </summary>
+    private static bool GetBoolValue(Dictionary<string, JsonElement> dict, params string[] names)
+    {
+        if (TryGetElement(dict, out var elem, names))
+        {
+            if (elem.ValueKind == JsonValueKind.True) return true;
+            if (elem.ValueKind == JsonValueKind.False) return false;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Get an int value, checking multiple property names
+    /// </summary>
+    private static int GetIntValue(Dictionary<string, JsonElement> dict, params string[] names)
+    {
+        if (TryGetElement(dict, out var elem, names) && elem.ValueKind == JsonValueKind.Number)
+            return elem.GetInt32();
+        return 0;
     }
 }

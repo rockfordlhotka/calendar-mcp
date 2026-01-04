@@ -53,6 +53,43 @@ public class M365AuthenticationService : IM365AuthenticationService
     }
 
     /// <inheritdoc/>
+    public async Task<string> AuthenticateWithDeviceCodeAsync(
+        string tenantId,
+        string clientId,
+        string[] scopes,
+        string accountId,
+        Func<string, Task> deviceCodeCallback,
+        CancellationToken cancellationToken = default)
+    {
+        var app = await GetOrCreateAppAsync(tenantId, clientId, accountId);
+
+        try
+        {
+            _logger.LogInformation("Starting Device Code authentication for account {AccountId}...", accountId);
+
+            var authResult = await app.AcquireTokenWithDeviceCode(scopes, deviceCodeResult =>
+            {
+                // Call the callback with the device code message for the user to display
+                return deviceCodeCallback(deviceCodeResult.Message);
+            })
+            .ExecuteAsync(cancellationToken);
+
+            _logger.LogInformation("✓ Device Code authentication successful for account {AccountId}", accountId);
+            return authResult.AccessToken;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Device Code authentication cancelled for account {AccountId}", accountId);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Device Code authentication failed for account {AccountId}: {Message}", accountId, ex.Message);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<string?> GetTokenSilentlyAsync(
         string tenantId,
         string clientId,
@@ -115,10 +152,12 @@ public class M365AuthenticationService : IM365AuthenticationService
         Directory.CreateDirectory(cacheDirectory);
 
         // Build MSAL application
+        // Use the default redirect URI for desktop/native apps which works for both 
+        // organizational (M365) and consumer (Outlook.com) accounts
         var app = PublicClientApplicationBuilder
             .Create(clientId)
             .WithAuthority($"https://login.microsoftonline.com/{tenantId}")
-            .WithRedirectUri("http://localhost")
+            .WithDefaultRedirectUri()
             .Build();
 
         // Set up token cache persistence
