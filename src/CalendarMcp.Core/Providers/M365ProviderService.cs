@@ -1,6 +1,9 @@
 using CalendarMcp.Core.Models;
 using CalendarMcp.Core.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
+using Microsoft.Graph.Models;
+using Microsoft.Graph.Me.SendMail;
 
 namespace CalendarMcp.Core.Providers;
 
@@ -77,9 +80,54 @@ public class M365ProviderService : IM365ProviderService
             return Enumerable.Empty<EmailMessage>();
         }
 
-        _logger.LogWarning("M365ProviderService.GetEmailsAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to fetch emails
-        return Enumerable.Empty<EmailMessage>();
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            var messages = await graphClient.Me.MailFolders["inbox"].Messages.GetAsync(config =>
+            {
+                config.QueryParameters.Top = count;
+                config.QueryParameters.Orderby = ["receivedDateTime desc"];
+                config.QueryParameters.Select = ["id", "subject", "from", "toRecipients", "ccRecipients", "receivedDateTime", "isRead", "hasAttachments", "bodyPreview"];
+                
+                if (unreadOnly)
+                {
+                    config.QueryParameters.Filter = "isRead eq false";
+                }
+            }, cancellationToken);
+
+            var result = new List<EmailMessage>();
+            if (messages?.Value != null)
+            {
+                foreach (var message in messages.Value)
+                {
+                    result.Add(new EmailMessage
+                    {
+                        Id = message.Id ?? string.Empty,
+                        AccountId = accountId,
+                        Subject = message.Subject ?? string.Empty,
+                        From = message.From?.EmailAddress?.Address ?? string.Empty,
+                        FromName = message.From?.EmailAddress?.Name ?? string.Empty,
+                        To = message.ToRecipients?.Select(r => r.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
+                        Cc = message.CcRecipients?.Select(r => r.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
+                        Body = message.BodyPreview ?? string.Empty,
+                        BodyFormat = "text",
+                        ReceivedDateTime = message.ReceivedDateTime?.DateTime ?? DateTime.MinValue,
+                        IsRead = message.IsRead ?? false,
+                        HasAttachments = message.HasAttachments ?? false
+                    });
+                }
+            }
+
+            _logger.LogInformation("Retrieved {Count} emails from M365 account {AccountId}", result.Count, accountId);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching emails from M365 account {AccountId}", accountId);
+            return Enumerable.Empty<EmailMessage>();
+        }
     }
 
     public async Task<IEnumerable<EmailMessage>> SearchEmailsAsync(
@@ -96,9 +144,66 @@ public class M365ProviderService : IM365ProviderService
             return Enumerable.Empty<EmailMessage>();
         }
 
-        _logger.LogWarning("M365ProviderService.SearchEmailsAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to search emails
-        return Enumerable.Empty<EmailMessage>();
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            var messages = await graphClient.Me.Messages.GetAsync(config =>
+            {
+                config.QueryParameters.Top = count;
+                config.QueryParameters.Orderby = ["receivedDateTime desc"];
+                config.QueryParameters.Select = ["id", "subject", "from", "toRecipients", "ccRecipients", "receivedDateTime", "isRead", "hasAttachments", "bodyPreview"];
+                config.QueryParameters.Search = $"\"{query}\"";
+
+                // Build filter for date range if specified
+                var filters = new List<string>();
+                if (fromDate.HasValue)
+                {
+                    filters.Add($"receivedDateTime ge {fromDate.Value:yyyy-MM-ddTHH:mm:ssZ}");
+                }
+                if (toDate.HasValue)
+                {
+                    filters.Add($"receivedDateTime le {toDate.Value:yyyy-MM-ddTHH:mm:ssZ}");
+                }
+                if (filters.Count > 0)
+                {
+                    config.QueryParameters.Filter = string.Join(" and ", filters);
+                }
+            }, cancellationToken);
+
+            var result = new List<EmailMessage>();
+            if (messages?.Value != null)
+            {
+                foreach (var message in messages.Value)
+                {
+                    result.Add(new EmailMessage
+                    {
+                        Id = message.Id ?? string.Empty,
+                        AccountId = accountId,
+                        Subject = message.Subject ?? string.Empty,
+                        From = message.From?.EmailAddress?.Address ?? string.Empty,
+                        FromName = message.From?.EmailAddress?.Name ?? string.Empty,
+                        To = message.ToRecipients?.Select(r => r.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
+                        Cc = message.CcRecipients?.Select(r => r.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
+                        Body = message.BodyPreview ?? string.Empty,
+                        BodyFormat = "text",
+                        ReceivedDateTime = message.ReceivedDateTime?.DateTime ?? DateTime.MinValue,
+                        IsRead = message.IsRead ?? false,
+                        HasAttachments = message.HasAttachments ?? false
+                    });
+                }
+            }
+
+            _logger.LogInformation("Search returned {Count} emails from M365 account {AccountId} for query '{Query}'", 
+                result.Count, accountId, query);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching emails from M365 account {AccountId}", accountId);
+            return Enumerable.Empty<EmailMessage>();
+        }
     }
 
     public async Task<EmailMessage?> GetEmailDetailsAsync(
@@ -112,9 +217,45 @@ public class M365ProviderService : IM365ProviderService
             return null;
         }
 
-        _logger.LogWarning("M365ProviderService.GetEmailDetailsAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to fetch email details
-        return null;
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            var message = await graphClient.Me.Messages[emailId].GetAsync(config =>
+            {
+                config.QueryParameters.Select = ["id", "subject", "from", "toRecipients", "ccRecipients", "receivedDateTime", "isRead", "hasAttachments", "body"];
+            }, cancellationToken);
+
+            if (message == null)
+            {
+                return null;
+            }
+
+            var result = new EmailMessage
+            {
+                Id = message.Id ?? string.Empty,
+                AccountId = accountId,
+                Subject = message.Subject ?? string.Empty,
+                From = message.From?.EmailAddress?.Address ?? string.Empty,
+                FromName = message.From?.EmailAddress?.Name ?? string.Empty,
+                To = message.ToRecipients?.Select(r => r.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
+                Cc = message.CcRecipients?.Select(r => r.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
+                Body = message.Body?.Content ?? string.Empty,
+                BodyFormat = message.Body?.ContentType == BodyType.Html ? "html" : "text",
+                ReceivedDateTime = message.ReceivedDateTime?.DateTime ?? DateTime.MinValue,
+                IsRead = message.IsRead ?? false,
+                HasAttachments = message.HasAttachments ?? false
+            };
+
+            _logger.LogInformation("Retrieved email details for {EmailId} from M365 account {AccountId}", emailId, accountId);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting email details for {EmailId} from M365 account {AccountId}", emailId, accountId);
+            return null;
+        }
     }
 
     public async Task<string> SendEmailAsync(
@@ -132,9 +273,61 @@ public class M365ProviderService : IM365ProviderService
             throw new InvalidOperationException($"Cannot send email: No authentication token for account {accountId}");
         }
 
-        _logger.LogWarning("M365ProviderService.SendEmailAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to send email
-        return "stub-message-id";
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            var message = new Message
+            {
+                Subject = subject,
+                Body = new ItemBody
+                {
+                    Content = body,
+                    ContentType = bodyFormat.Equals("html", StringComparison.OrdinalIgnoreCase) ? BodyType.Html : BodyType.Text,
+                },
+                ToRecipients = to.Split(',', ';')
+                    .Select(email => email.Trim())
+                    .Where(email => !string.IsNullOrEmpty(email))
+                    .Select(email => new Recipient
+                    {
+                        EmailAddress = new Microsoft.Graph.Models.EmailAddress
+                        {
+                            Address = email
+                        }
+                    })
+                    .ToList(),
+            };
+
+            if (cc != null && cc.Count > 0)
+            {
+                message.CcRecipients = cc
+                    .Select(email => new Recipient
+                    {
+                        EmailAddress = new Microsoft.Graph.Models.EmailAddress
+                        {
+                            Address = email.Trim()
+                        }
+                    })
+                    .ToList();
+            }
+
+            await graphClient.Me.SendMail.PostAsync(new SendMailPostRequestBody
+            {
+                Message = message,
+                SaveToSentItems = true
+            }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Email sent successfully from M365 account {AccountId} to {To}", accountId, to);
+            
+            // SendMail doesn't return a message ID, so we return a confirmation
+            return $"sent-{DateTime.UtcNow:yyyyMMddHHmmss}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending email from M365 account {AccountId}", accountId);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<CalendarInfo>> ListCalendarsAsync(
@@ -147,9 +340,42 @@ public class M365ProviderService : IM365ProviderService
             return Enumerable.Empty<CalendarInfo>();
         }
 
-        _logger.LogWarning("M365ProviderService.ListCalendarsAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to list calendars
-        return Enumerable.Empty<CalendarInfo>();
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            var calendars = await graphClient.Me.Calendars.GetAsync(config =>
+            {
+                config.QueryParameters.Select = ["id", "name", "owner", "canEdit", "isDefaultCalendar", "hexColor"];
+            }, cancellationToken);
+
+            var result = new List<CalendarInfo>();
+            if (calendars?.Value != null)
+            {
+                foreach (var calendar in calendars.Value)
+                {
+                    result.Add(new CalendarInfo
+                    {
+                        Id = calendar.Id ?? string.Empty,
+                        AccountId = accountId,
+                        Name = calendar.Name ?? string.Empty,
+                        Owner = calendar.Owner?.Address ?? string.Empty,
+                        CanEdit = calendar.CanEdit ?? false,
+                        IsDefault = calendar.IsDefaultCalendar ?? false,
+                        Color = calendar.HexColor
+                    });
+                }
+            }
+
+            _logger.LogInformation("Retrieved {Count} calendars from M365 account {AccountId}", result.Count, accountId);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing calendars from M365 account {AccountId}", accountId);
+            return Enumerable.Empty<CalendarInfo>();
+        }
     }
 
     public async Task<IEnumerable<CalendarEvent>> GetCalendarEventsAsync(
@@ -166,9 +392,87 @@ public class M365ProviderService : IM365ProviderService
             return Enumerable.Empty<CalendarEvent>();
         }
 
-        _logger.LogWarning("M365ProviderService.GetCalendarEventsAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to fetch calendar events
-        return Enumerable.Empty<CalendarEvent>();
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            // Default to today and next 30 days if not specified
+            var start = startDate ?? DateTime.UtcNow.Date;
+            var end = endDate ?? DateTime.UtcNow.Date.AddDays(30);
+
+            // Use CalendarView for date range queries (it expands recurring events)
+            Microsoft.Graph.Models.EventCollectionResponse? events;
+            
+            if (string.IsNullOrEmpty(calendarId))
+            {
+                // Query the default calendar
+                events = await graphClient.Me.Calendar.CalendarView.GetAsync(config =>
+                {
+                    config.QueryParameters.StartDateTime = start.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    config.QueryParameters.EndDateTime = end.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    config.QueryParameters.Top = count;
+                    config.QueryParameters.Orderby = ["start/dateTime"];
+                    config.QueryParameters.Select = ["id", "subject", "start", "end", "location", "body", "organizer", "attendees", "isAllDay", "responseStatus"];
+                }, cancellationToken);
+            }
+            else
+            {
+                // Query a specific calendar
+                events = await graphClient.Me.Calendars[calendarId].CalendarView.GetAsync(config =>
+                {
+                    config.QueryParameters.StartDateTime = start.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    config.QueryParameters.EndDateTime = end.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    config.QueryParameters.Top = count;
+                    config.QueryParameters.Orderby = ["start/dateTime"];
+                    config.QueryParameters.Select = ["id", "subject", "start", "end", "location", "body", "organizer", "attendees", "isAllDay", "responseStatus"];
+                }, cancellationToken);
+            }
+
+            var result = new List<CalendarEvent>();
+            if (events?.Value != null)
+            {
+                foreach (var evt in events.Value)
+                {
+                    result.Add(new CalendarEvent
+                    {
+                        Id = evt.Id ?? string.Empty,
+                        AccountId = accountId,
+                        CalendarId = calendarId ?? "primary",
+                        Subject = evt.Subject ?? string.Empty,
+                        Start = DateTime.TryParse(evt.Start?.DateTime, out var startDt) ? startDt : DateTime.MinValue,
+                        End = DateTime.TryParse(evt.End?.DateTime, out var endDt) ? endDt : DateTime.MinValue,
+                        Location = evt.Location?.DisplayName ?? string.Empty,
+                        Body = evt.Body?.Content ?? string.Empty,
+                        Organizer = evt.Organizer?.EmailAddress?.Address ?? string.Empty,
+                        Attendees = evt.Attendees?.Select(a => a.EmailAddress?.Address ?? string.Empty).ToList() ?? [],
+                        IsAllDay = evt.IsAllDay ?? false,
+                        ResponseStatus = MapResponseStatus(evt.ResponseStatus?.Response)
+                    });
+                }
+            }
+
+            _logger.LogInformation("Retrieved {Count} events from M365 account {AccountId}", result.Count, accountId);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting calendar events from M365 account {AccountId}", accountId);
+            return Enumerable.Empty<CalendarEvent>();
+        }
+    }
+
+    private static string MapResponseStatus(ResponseType? response)
+    {
+        return response switch
+        {
+            ResponseType.Accepted => "accepted",
+            ResponseType.TentativelyAccepted => "tentative",
+            ResponseType.Declined => "declined",
+            ResponseType.NotResponded => "notResponded",
+            ResponseType.Organizer => "accepted",
+            _ => "notResponded"
+        };
     }
 
     public async Task<string> CreateEventAsync(
@@ -188,9 +492,76 @@ public class M365ProviderService : IM365ProviderService
             throw new InvalidOperationException($"Cannot create event: No authentication token for account {accountId}");
         }
 
-        _logger.LogWarning("M365ProviderService.CreateEventAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to create event
-        return "stub-event-id";
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            var newEvent = new Event
+            {
+                Subject = subject,
+                Start = new DateTimeTimeZone
+                {
+                    DateTime = start.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    TimeZone = TimeZoneInfo.Local.Id
+                },
+                End = new DateTimeTimeZone
+                {
+                    DateTime = end.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    TimeZone = TimeZoneInfo.Local.Id
+                }
+            };
+
+            if (!string.IsNullOrEmpty(location))
+            {
+                newEvent.Location = new Location
+                {
+                    DisplayName = location
+                };
+            }
+
+            if (!string.IsNullOrEmpty(body))
+            {
+                newEvent.Body = new ItemBody
+                {
+                    ContentType = BodyType.Html,
+                    Content = body
+                };
+            }
+
+            if (attendees != null && attendees.Count > 0)
+            {
+                newEvent.Attendees = attendees
+                    .Select(email => new Attendee
+                    {
+                        EmailAddress = new Microsoft.Graph.Models.EmailAddress
+                        {
+                            Address = email.Trim()
+                        },
+                        Type = AttendeeType.Required
+                    })
+                    .ToList();
+            }
+
+            Event? createdEvent;
+            if (string.IsNullOrEmpty(calendarId))
+            {
+                createdEvent = await graphClient.Me.Calendar.Events.PostAsync(newEvent, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                createdEvent = await graphClient.Me.Calendars[calendarId].Events.PostAsync(newEvent, cancellationToken: cancellationToken);
+            }
+
+            var eventId = createdEvent?.Id ?? string.Empty;
+            _logger.LogInformation("Created event {EventId} in M365 account {AccountId}", eventId, accountId);
+            return eventId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating event in M365 account {AccountId}", accountId);
+            throw;
+        }
     }
 
     public async Task UpdateEventAsync(
@@ -210,8 +581,67 @@ public class M365ProviderService : IM365ProviderService
             throw new InvalidOperationException($"Cannot update event: No authentication token for account {accountId}");
         }
 
-        _logger.LogWarning("M365ProviderService.UpdateEventAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to update event
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            var eventUpdate = new Event();
+
+            if (!string.IsNullOrEmpty(subject))
+            {
+                eventUpdate.Subject = subject;
+            }
+
+            if (start.HasValue)
+            {
+                eventUpdate.Start = new DateTimeTimeZone
+                {
+                    DateTime = start.Value.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    TimeZone = TimeZoneInfo.Local.Id
+                };
+            }
+
+            if (end.HasValue)
+            {
+                eventUpdate.End = new DateTimeTimeZone
+                {
+                    DateTime = end.Value.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    TimeZone = TimeZoneInfo.Local.Id
+                };
+            }
+
+            if (!string.IsNullOrEmpty(location))
+            {
+                eventUpdate.Location = new Location
+                {
+                    DisplayName = location
+                };
+            }
+
+            if (attendees != null)
+            {
+                eventUpdate.Attendees = attendees
+                    .Select(email => new Attendee
+                    {
+                        EmailAddress = new Microsoft.Graph.Models.EmailAddress
+                        {
+                            Address = email.Trim()
+                        },
+                        Type = AttendeeType.Required
+                    })
+                    .ToList();
+            }
+
+            await graphClient.Me.Events[eventId].PatchAsync(eventUpdate, cancellationToken: cancellationToken);
+            
+            _logger.LogInformation("Updated event {EventId} in M365 account {AccountId}", eventId, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating event {EventId} in M365 account {AccountId}", eventId, accountId);
+            throw;
+        }
     }
 
     public async Task DeleteEventAsync(
@@ -226,7 +656,19 @@ public class M365ProviderService : IM365ProviderService
             throw new InvalidOperationException($"Cannot delete event: No authentication token for account {accountId}");
         }
 
-        _logger.LogWarning("M365ProviderService.DeleteEventAsync not yet fully implemented for account {AccountId}", accountId);
-        // TODO: Use Microsoft Graph SDK to delete event
+        try
+        {
+            var authProvider = new BearerTokenAuthenticationProvider(token);
+            var graphClient = new GraphServiceClient(authProvider);
+
+            await graphClient.Me.Events[eventId].DeleteAsync(cancellationToken: cancellationToken);
+            
+            _logger.LogInformation("Deleted event {EventId} from M365 account {AccountId}", eventId, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting event {EventId} from M365 account {AccountId}", eventId, accountId);
+            throw;
+        }
     }
 }
